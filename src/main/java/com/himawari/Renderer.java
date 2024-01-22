@@ -9,9 +9,9 @@ import static io.github.libsdl4j.api.render.SdlRender.SDL_SetRenderDrawColor;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.himawari.geom.Mat4;
-import com.himawari.geom.Vec3;
-import com.himawari.geom.Vec4;
+import com.himawari.HLA.Mat4;
+import com.himawari.HLA.Vec3;
+import com.himawari.HLA.Vec4;
 
 import io.github.libsdl4j.api.render.SDL_Renderer;
 import io.github.libsdl4j.api.render.SDL_Vertex;
@@ -24,6 +24,15 @@ public class Renderer {
     public static Mat4 rotationX = new Mat4(0f);
     public static Mat4 rotationY = new Mat4(0f);
     public static Mat4 rotationZ = new Mat4(0f);
+
+    // Viewport normalizing
+    private static float scaleOffseting = 1f;
+
+    private static float scalingX = 0.5f * Window.width;
+    private static float scalingY = 0.5f * Window.height;
+    
+    private static Vec3 normalizingTransformationPosition = new Vec3(scaleOffseting, scaleOffseting, 0);
+    private static Vec3 normalizingTransformationScale = new Vec3(scalingX, scalingY, 1);
 
     // List of meshes to display
     public static List<Mesh> renderQueue = new ArrayList<Mesh>();
@@ -82,42 +91,7 @@ public class Renderer {
             
             // Before buffering the renderer
             // Treat and cache the vertices after all projection operations
-
-            Vec3[] trianglePool = new Vec3[mesh.vertices.length];
-            int index = 0;
-
-            for (Vec3 vertex : mesh.vertices) {
-
-                // Copy the current value
-                trianglePool[index] = vertex.copy();
-
-                // Apply rotations
-                ProjectRotationMatricesToAngle(mesh.rotation);
-                trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], rotationZ);
-                trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], rotationX);
-                trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], rotationY);
-
-                // Apply local transformations
-                trianglePool[index].sum(mesh.position);
-                trianglePool[index].dot(mesh.scale);
-
-                // Apply projection
-                trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], projectionMatrix);
-
-                // Scale to normalized viewport
-                float scaleOffseting = 1f;
-                
-                float scalingX = 0.5f * Window.width;
-                float scalingY = 0.5f * Window.height;
-
-                trianglePool[index].x += scaleOffseting;
-                trianglePool[index].y += scaleOffseting;
-
-                trianglePool[index].x *= scalingX;
-                trianglePool[index].y *= scalingY;
-
-                index++;
-            }
+            Vec3[] trianglePool = ProjectVerticesFromMesh(mesh);
 
             // Buffer rendering
             // For each face of the mesh draw it's triangles
@@ -129,11 +103,69 @@ public class Renderer {
         SDL_RenderPresent(renderer);
     }
 
+    // Efectuate the rotation of the points in 3D space
+    private static Vec3[] ProjectVerticesFromMesh(Mesh mesh){
+
+        Vec3[] trianglePool = new Vec3[mesh.vertices.length];
+        int index = 0;
+
+        for (Vec3 vertex : mesh.vertices) {
+
+            // Copy the current value
+            trianglePool[index] = vertex.copy();
+
+            // Apply rotations
+            ProjectRotationMatricesToAngle(mesh.rotation);
+            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], rotationZ);
+            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], rotationX);
+            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], rotationY);
+
+            // Apply local transformations
+            trianglePool[index].sum(mesh.position);
+            trianglePool[index].dot(mesh.scale);
+
+            index++;
+        }
+
+        return trianglePool;
+    }
+
+    // Efectuate the projection of the points in 3D space
+    private static Vec3[] ProjectTriangleToScreen(Vec3[] triangle){
+        
+        for (int j = 0; j < triangle.length; j++) {
+
+            // Apply projection
+            triangle[j] = Utils.MultiplyMatrixVector(triangle[j], projectionMatrix);
+            
+            // Scale to normalized viewport
+            triangle[j].sum(normalizingTransformationPosition);
+            triangle[j].dot(normalizingTransformationScale);
+        }
+
+        return triangle;
+    }
+
+    // Unlink the faces and buffer the rendering of the faces
     private static void BufferFaceTriangles(int[][] faces, Vec3[] vertices, SDL_Renderer renderer){
 
         for (int i = 0; i < faces.length; i++) {
 
+            // 3D points that compose the trinagle face unlinked
+            // Efectuate the projection
             Vec3[] triangle = UnlinkTriangleFaceVertices(faces[i], vertices);
+            triangle = ProjectTriangleToScreen(triangle);
+
+            // Normal calculation
+            // Visibility is dependant on normal calculations
+            Vec3 normal = CalculateFaceNormal(triangle);
+
+            if(normal.z >= 0) {
+
+                // Invisible face
+                // Skip projection and drawing´
+                continue;
+            }
 
             DrawTriangle(
                 renderer, 
@@ -142,6 +174,18 @@ public class Renderer {
                 triangle[2]
             );
         }
+    }
+
+    // Calculates the normal to a surface defined by 3 points
+    private static Vec3 CalculateFaceNormal(Vec3[] triangle){
+        
+        Vec3 line1, line2, normal = new Vec3();
+        line1 = triangle[1].copy().subtract(triangle[0].copy());
+        line2 = triangle[2].copy().subtract(triangle[0].copy());
+
+        normal = Vec3.CrossProduct(line1, line2).normalized();
+
+        return normal;
     }
 
     // From the face vertex links, turn them to the cached vertex triangles

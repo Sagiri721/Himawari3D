@@ -9,7 +9,7 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.himawari.geom.Vec3;
+import com.himawari.HLA.Vec3;
 
 public class Mesh {
 
@@ -22,6 +22,7 @@ public class Mesh {
     
     public Vec3[] vertices;
     public int[][] faces;
+    public Vec3[] normals;
 
     public static Mesh LoadFrom(String filename){
 
@@ -74,13 +75,7 @@ public class Mesh {
             mesh.faces = new int[faces.size()][];
             mesh.faces = faces.toArray(mesh.faces);
 
-            // for (int i = 0; i < mesh.faces.length; i++) {
-            //     for (int j = 0; j < mesh.faces[i].length; j++) {
-            //         if(mesh.faces[i][j] == null) System.out.print("null ");
-            //         else System.out.print(mesh.faces[i][j].x + ", " + mesh.faces[i][j].y + ", " + mesh.faces[i][j].z + " ");
-            //     }
-            //     System.out.println();
-            // }
+            mesh.normals = new Vec3[mesh.faces.length];
 
             return mesh;
 

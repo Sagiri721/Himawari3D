@@ -1,4 +1,4 @@
-package com.himawari.geom;
+package com.himawari.HLA;
 
 public class Vec3 implements Comparable<Vec3> {
 

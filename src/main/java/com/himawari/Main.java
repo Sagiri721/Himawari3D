@@ -6,7 +6,7 @@ public class Main {
         Window.SetDimensions(768, 768);
         Renderer.LoadMatrixInformation();
 
-        Mesh cube = Mesh.LoadFrom("cube.obj");
+        Mesh cube = Mesh.LoadFrom("models/spaceship.obj");
         Renderer.renderQueue.add(cube);
         
         Window.InitWindow("testing");

@@ -5,10 +5,10 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
-import com.himawari.geom.Mat4;
-import com.himawari.geom.Vec2;
-import com.himawari.geom.Vec3;
-import com.himawari.geom.Vec4;
+import com.himawari.HLA.Mat4;
+import com.himawari.HLA.Vec2;
+import com.himawari.HLA.Vec3;
+import com.himawari.HLA.Vec4;
 
 import io.github.libsdl4j.api.render.SDL_Vertex;
 
