@@ -15,16 +15,20 @@ public class Mesh {
 
     public static final String VERTEX_CUE = "v";
     public static final String FACE_CUE = "f";
+
+    public Vec3 scale = new Vec3(1, 1, 1);
+    public Vec3 rotation = new Vec3(0,0,0);
+    public Vec3 position = new Vec3(1, 1, 8);
     
     public Vec3[] vertices;
-    public Vec3[][] faces;
+    public int[][] faces;
 
     public static Mesh LoadFrom(String filename){
 
         try {
 
             List<Vec3> vertices = new ArrayList<Vec3>();
-            List<Vec3[]> faces = new ArrayList<Vec3[]>();
+            List<int[]> faces = new ArrayList<int[]>();
             
             String[] text = Utils.GetFileContents(filename).split("\n");
             for (String line : text) {
@@ -47,18 +51,15 @@ public class Mesh {
                         vertex.y = Float.parseFloat(values[2]);
                         vertex.z = Float.parseFloat(values[3]);
 
-                        vertex.scale(30);
-                        vertex.sum(Vec3.from(100));
-
                         vertices.add(vertex);
 
                         break;         
                     case FACE_CUE:
 
-                        Vec3[] faceStructure = new Vec3[3];
-                        faceStructure[0] = ParseFace(values[1]);
-                        faceStructure[1] = ParseFace(values[2]);
-                        faceStructure[2] = ParseFace(values[3]);
+                        int[] faceStructure = new int[3];
+                        faceStructure[0] = Integer.parseInt(values[1]) - 1;
+                        faceStructure[1] = Integer.parseInt(values[2]) - 1;
+                        faceStructure[2] = Integer.parseInt(values[3]) - 1;
 
                         faces.add(faceStructure);
                         break;
@@ -70,7 +71,7 @@ public class Mesh {
             mesh.vertices = vertices.toArray(new Vec3[vertices.size()]);
             
             // Transform list of arrays to matrix
-            mesh.faces = new Vec3[faces.size()][3];
+            mesh.faces = new int[faces.size()][];
             mesh.faces = faces.toArray(mesh.faces);
 
             // for (int i = 0; i < mesh.faces.length; i++) {
@@ -92,7 +93,7 @@ public class Mesh {
 
     private static Vec3 ParseFace(String text) {
 
-        Float[] map = Arrays.asList(text.split("/")).stream().map(Float::valueOf).toArray(Float[]::new);
+        Float[] map = Arrays.asList(text.split(" ")).stream().map(Float::valueOf).toArray(Float[]::new);
         return new Vec3(
                 map[0].floatValue(),
                 map[1].floatValue(),

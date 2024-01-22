@@ -55,6 +55,15 @@ public class Vec3 implements Comparable<Vec3> {
         return this;
     }
 
+    public Vec3 dot(Vec3 other) {
+
+        this.x *= other.x;
+        this.y *= other.y;
+        this.z *= other.z;
+
+        return this;
+    }
+
     public Vec3 subtract(Vec3 other) {
 
         this.x -= other.x;
@@ -69,6 +78,15 @@ public class Vec3 implements Comparable<Vec3> {
         this.x /= other.x;
         this.y /= other.y;
         this.z /= other.z;
+
+        return this;
+    }
+
+    public Vec3 divide(float other) {
+
+        this.x /= other;
+        this.y /= other;
+        this.z /= other;
 
         return this;
     }
