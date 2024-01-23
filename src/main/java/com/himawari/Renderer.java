@@ -1,6 +1,8 @@
 package com.himawari;
 
+import static io.github.libsdl4j.api.render.SdlRender.SDL_DestroyTexture;
 import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderClear;
+import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderCopy;
 import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderDrawLine;
 import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderGeometry;
 import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderPresent;
@@ -14,6 +16,7 @@ import com.himawari.HLA.Vec3;
 import com.himawari.HLA.Vec4;
 
 import io.github.libsdl4j.api.render.SDL_Renderer;
+import io.github.libsdl4j.api.render.SDL_Texture;
 import io.github.libsdl4j.api.render.SDL_Vertex;
 
 public class Renderer {
@@ -84,6 +87,10 @@ public class Renderer {
         // Draw the clear color
         SDL_SetRenderDrawColor(renderer, (byte)0, (byte)0, (byte)0, (byte)255);
         SDL_RenderClear(renderer);
+        
+        // Clear buffers
+        BackBuffer.ClearBackBuffer();
+        ZBuffer.ClearDepthBuffer();
 
         SDL_SetRenderDrawColor(renderer, (byte)255, (byte)255, (byte)255, (byte)255);
 
@@ -100,7 +107,12 @@ public class Renderer {
         }
 
         // Render the current frame
+        
+        SDL_Texture renderPixels = BackBuffer.FetchTexture(renderer);
+        SDL_RenderCopy(renderer, renderPixels, null, null);
         SDL_RenderPresent(renderer);
+
+        SDL_DestroyTexture(renderPixels);
     }
 
     // Efectuate the rotation of the points in 3D space
@@ -154,24 +166,32 @@ public class Renderer {
             // 3D points that compose the trinagle face unlinked
             // Efectuate the projection
             Vec3[] triangle = UnlinkTriangleFaceVertices(faces[i], vertices);
-            triangle = ProjectTriangleToScreen(triangle);
-
+            
             // Normal calculation
             // Visibility is dependant on normal calculations
             Vec3 normal = CalculateFaceNormal(triangle);
+            
+            // Invisible face
+            // Skip projection and drawing
+            float visionAngleDifference = Vec3.DotProduct(normal, (triangle[0].copy().subtract(Camera.position)));
+            if(visionAngleDifference >= 0) continue;
 
-            if(normal.z >= 0) {
+            // Calculate lighting conditions from normal
+            Vec3 lightDirection = new Vec3(0,0,-1).normalized();
+            float lightProduct = Vec3.DotProduct(normal, lightDirection);
 
-                // Invisible face
-                // Skip projection and drawing´
-                continue;
-            }
+            Color lightShade = Color.getLuminanceVariation(Utils.WHITE, lightProduct);
+            
+            // Project the triangle points to screen space
+            triangle = ProjectTriangleToScreen(triangle);
 
-            DrawTriangle(
+            // Buffer the face triangle
+            FillTriangle(
                 renderer, 
                 triangle[0],
                 triangle[1],
-                triangle[2]
+                triangle[2],
+                lightShade
             );
         }
     }
@@ -197,19 +217,25 @@ public class Renderer {
     // Draw a triangle to the screen
     private static void DrawTriangle(SDL_Renderer renderer, Vec3 point1, Vec3 point2, Vec3 point3){
 
-        SDL_RenderDrawLine(renderer, (int) point1.x, (int) point1.y, (int) point2.x, (int) point2.y);
-        SDL_RenderDrawLine(renderer, (int) point2.x, (int) point2.y, (int) point3.x, (int) point3.y);
-        SDL_RenderDrawLine(renderer, (int) point3.x, (int) point3.y, (int) point1.x, (int) point1.y);
+        // SDL_RenderDrawLine(renderer, (int) point1.x, (int) point1.y, (int) point2.x, (int) point2.y);
+        // SDL_RenderDrawLine(renderer, (int) point2.x, (int) point2.y, (int) point3.x, (int) point3.y);
+        // SDL_RenderDrawLine(renderer, (int) point3.x, (int) point3.y, (int) point1.x, (int) point1.y);
+
+        BackBuffer.FillBufferLine(point1.x, point1.y, point2.x, point2.y, Utils.WHITE);
+        BackBuffer.FillBufferLine(point2.x, point2.y, point3.x, point3.y, Utils.WHITE);
+        BackBuffer.FillBufferLine(point3.x, point3.y, point1.x, point1.y, Utils.WHITE);
     }
 
     // Fill the triangle's geometry
-    private static void FillTriangle(SDL_Renderer renderer, Vec3 point1, Vec3 point2, Vec3 point3, Vec4 color){
+    private static void FillTriangle(SDL_Renderer renderer, Vec3 point1, Vec3 point2, Vec3 point3, Color color){
 
-        List<SDL_Vertex> vertsGeometry = new ArrayList<SDL_Vertex>();
-        vertsGeometry.add(Utils.ToVertex(point1, color));
-        vertsGeometry.add(Utils.ToVertex(point2, color));
-        vertsGeometry.add(Utils.ToVertex(point3, color));
+        // List<SDL_Vertex> vertsGeometry = new ArrayList<SDL_Vertex>();
+        // vertsGeometry.add(Utils.ToVertex(point1, color.colorData));
+        // vertsGeometry.add(Utils.ToVertex(point2, color.colorData));
+        // vertsGeometry.add(Utils.ToVertex(point3, color.colorData));
 
-        SDL_RenderGeometry(renderer, null, vertsGeometry, null);
+        // SDL_RenderGeometry(renderer, null, vertsGeometry, null);
+
+        BackBuffer.FillBufferTriangle(point1, point2, point3, color);
     }
 }

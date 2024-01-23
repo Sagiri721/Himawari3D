@@ -86,7 +86,7 @@ public class Mesh {
         return null;
     }
 
-    private static Vec3 ParseFace(String text) {
+    public static Vec3 ParseFace(String text) {
 
         Float[] map = Arrays.asList(text.split(" ")).stream().map(Float::valueOf).toArray(Float[]::new);
         return new Vec3(

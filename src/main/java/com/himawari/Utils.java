@@ -15,8 +15,8 @@ import io.github.libsdl4j.api.render.SDL_Vertex;
 public class Utils {
 
     // Frequent colors
-    public static final Vec4 BLACK = new Vec4(0,0,0,255);
-    public static final Vec4 WHITE = new Vec4(255,255,255,255);
+    public static final Color BLACK = new Color(0,0,0,255);
+    public static final Color WHITE = new Color(255,255,255,255);
     
     // Return the contents of a text file
     public static String GetFileContents(String filename) throws IOException{

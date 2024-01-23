@@ -38,6 +38,10 @@ public class Vec4 implements Comparable<Vec4> {
         this.w = w;
     }
 
+    public byte[] forEach(){
+        return new byte[] {(byte)x,(byte)y,(byte)z,(byte)w};
+    }
+
     public static float DotProduct(Vec4 vec1, Vec4 vec2){
 
         return vec1.x * vec2.x + vec1.y * vec2.y + vec1.z * vec2.z + vec1.w * vec2.w;
@@ -122,6 +126,21 @@ public class Vec4 implements Comparable<Vec4> {
     public Vec4 copy(){
 
         return new Vec4(x, y, z, w);
+    }
+
+    public Vec4 clamp(float lim1, float lim2){
+
+        if(x < lim1) x = lim1;
+        if(y < lim1) y = lim1;
+        if(z < lim1) z = lim1;
+        if(w < lim1) w = lim1;
+
+        if(x > lim2) x = lim2;
+        if(y > lim2) y = lim2;
+        if(z > lim2) z = lim2;
+        if(w > lim2) w = lim2;
+
+        return this;
     }
 
     @Override

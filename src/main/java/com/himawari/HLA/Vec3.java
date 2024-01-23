@@ -100,6 +100,8 @@ public class Vec3 implements Comparable<Vec3> {
         return this;
     }
 
+    public float sum() {return x + y + z;};
+
     public float magnitude() {
 
         double sum = Math.pow(this.x, 2) + Math.pow(this.y, 2) + Math.pow(this.z, 2);
