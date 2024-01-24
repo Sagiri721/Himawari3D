@@ -10,8 +10,24 @@ public class Mat4 {
         }
     }
 
+    public Mat4(float[][] data){
+        this.m = data;
+    }
+
     public Mat4 Set(int row, int col, float value){
         m[row][col] = value;
         return this;
+    }
+
+    public void Set(float[][] matrix){
+        this.m = matrix;
+    }
+
+    public float Get(int row, int col){
+        return m[row][col];
+    }
+
+    public Mat4 copy(){
+        return new Mat4(m);
     }
 }

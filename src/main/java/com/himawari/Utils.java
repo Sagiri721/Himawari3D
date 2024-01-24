@@ -5,8 +5,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
+import com.himawari.Gfx.Color;
+import com.himawari.Gfx.Projection;
 import com.himawari.HLA.Mat4;
-import com.himawari.HLA.Vec2;
 import com.himawari.HLA.Vec3;
 import com.himawari.HLA.Vec4;
 
@@ -17,6 +18,10 @@ public class Utils {
     // Frequent colors
     public static final Color BLACK = new Color(0,0,0,255);
     public static final Color WHITE = new Color(255,255,255,255);
+    
+    public static final Color RED = new Color(255,0,0,255);
+    public static final Color GREEN = new Color(0,255,0,255);
+    public static final Color BLUE = new Color(0,0,255,255);
     
     // Return the contents of a text file
     public static String GetFileContents(String filename) throws IOException{
@@ -64,5 +69,34 @@ public class Utils {
         output.z /= w;
 
         return output;
+    }
+
+    public static void MatrixPointAt(Vec3 position, Vec3 target, Vec3 up){
+
+        // Calculate new forward direction
+        Vec3 newForward = target.copy().subtract(position).normalized();
+        // Calculate new upwards direction
+        Vec3 a = newForward.copy().scale(Vec3.DotProduct(up, newForward));
+        Vec3 newUp = up.copy().subtract(a).normalized().invert();
+
+        // New right direction is the cross product of the two previous vectors
+        Vec3 newRight = Vec3.CrossProduct(newUp, newForward);
+
+        // Apply matrix transformations of camera behaviour
+        // look into wtf this does cuz i have no idea :3
+        Projection.ProjectCameraViewToAxis(newForward, newUp, newRight, position);
+        Projection.ProjectCameraViewToAxisInvert();
+    }
+
+    // Calculates the normal to a surface defined by 3 points
+    public static Vec3 CalculateFaceNormal(Vec3[] triangle){
+    
+        Vec3 line1, line2, normal = new Vec3();
+        line1 = triangle[1].copy().subtract(triangle[0].copy());
+        line2 = triangle[2].copy().subtract(triangle[0].copy());
+
+        normal = Vec3.CrossProduct(line1, line2).normalized();
+
+        return normal;
     }
 }

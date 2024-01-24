@@ -1,14 +1,11 @@
 package com.himawari;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
+import com.himawari.Gfx.Color;
 import com.himawari.HLA.Vec3;
 
 public class Mesh {
@@ -18,7 +15,9 @@ public class Mesh {
 
     public Vec3 scale = new Vec3(1, 1, 1);
     public Vec3 rotation = new Vec3(0,0,0);
-    public Vec3 position = new Vec3(1, 1, 8);
+    public Vec3 position = new Vec3(1, 1, 15);
+
+    public Color base = Utils.WHITE;
     
     public Vec3[] vertices;
     public int[][] faces;

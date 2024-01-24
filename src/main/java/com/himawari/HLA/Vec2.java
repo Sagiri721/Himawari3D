@@ -1,9 +1,5 @@
 package com.himawari.HLA;
 
-import io.github.libsdl4j.api.pixels.SDL_Color;
-import io.github.libsdl4j.api.rect.SDL_FPoint;
-import io.github.libsdl4j.api.render.SDL_Vertex;
-
 public class Vec2 implements Comparable<Vec2> {
 
     public static final Vec2 ZERO = new Vec2(0,0);

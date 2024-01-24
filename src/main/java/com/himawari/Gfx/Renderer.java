@@ -1,86 +1,26 @@
-package com.himawari;
+package com.himawari.Gfx;
 
 import static io.github.libsdl4j.api.render.SdlRender.SDL_DestroyTexture;
 import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderClear;
 import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderCopy;
-import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderDrawLine;
-import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderGeometry;
 import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderPresent;
 import static io.github.libsdl4j.api.render.SdlRender.SDL_SetRenderDrawColor;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import com.himawari.HLA.Mat4;
+import com.himawari.Camera;
+import com.himawari.Mesh;
+import com.himawari.Utils;
 import com.himawari.HLA.Vec3;
-import com.himawari.HLA.Vec4;
 
 import io.github.libsdl4j.api.render.SDL_Renderer;
 import io.github.libsdl4j.api.render.SDL_Texture;
-import io.github.libsdl4j.api.render.SDL_Vertex;
 
 public class Renderer {
-    
-    // Matrices
-    public static Mat4 projectionMatrix = new Mat4(0f);
-    
-    public static Mat4 rotationX = new Mat4(0f);
-    public static Mat4 rotationY = new Mat4(0f);
-    public static Mat4 rotationZ = new Mat4(0f);
-
-    // Viewport normalizing
-    private static float scaleOffseting = 1f;
-
-    private static float scalingX = 0.5f * Window.width;
-    private static float scalingY = 0.5f * Window.height;
-    
-    private static Vec3 normalizingTransformationPosition = new Vec3(scaleOffseting, scaleOffseting, 0);
-    private static Vec3 normalizingTransformationScale = new Vec3(scalingX, scalingY, 1);
 
     // List of meshes to display
     public static List<Mesh> renderQueue = new ArrayList<Mesh>();
-
-    public static float zNear = 0.1f, zFar = 1000;
-    public static float fov = 90f;
-
-    public static void LoadMatrixInformation(){
-
-        float fovFunction = 1f / (float) Math.tan(fov * 0.5f / 180f * Math.PI);
-     
-        projectionMatrix.Set(0, 0, Window.aspectRatio * fovFunction);
-        projectionMatrix.Set(1, 1, fovFunction);
-        projectionMatrix.Set(2, 2, zFar / (zFar - zNear));
-        projectionMatrix.Set(3, 2, -(zFar * zNear) / (zFar - zNear));
-        projectionMatrix.Set(2, 3, 1);
-    }
-
-    // TODO: Optimize for each axis
-    public static void ProjectRotationMatricesToAngle(Vec3 angle){
-
-        // Rotation Z
-		rotationZ.Set(0, 0, (float) Math.cos(angle.z));
-        rotationZ.Set(0, 1, (float) Math.sin(angle.z));
-        rotationZ.Set(1, 0, (float) -Math.sin(angle.z));
-        rotationZ.Set(1, 1, (float) Math.cos(angle.z));
-        rotationZ.Set(2, 2, 1);
-        rotationZ.Set(3, 3, 1);
-
-		// Rotation X
-		rotationX.Set(0, 0, 1);
-		rotationX.Set(1, 1, (float) Math.cos(angle.x));
-		rotationX.Set(1, 2, (float) Math.sin(angle.x));
-        rotationX.Set(2, 1, (float) -Math.sin(angle.x));
-        rotationX.Set(2, 2, (float) Math.cos(angle.x));
-        rotationX.Set(3, 3, 1);
-
-        // Rotation Y
-        rotationY.Set(0, 0, (float) Math.cos(angle.y));
-        rotationY.Set(0, 2, (float) Math.sin(angle.y));
-        rotationY.Set(2, 0, (float) -Math.sin(angle.y));
-        rotationY.Set(1, 1, 1);
-        rotationY.Set(2, 2, (float) Math.cos(angle.y));
-        rotationY.Set(3, 3, 1);
-    }
 
     public static void Render(SDL_Renderer renderer){
 
@@ -94,6 +34,7 @@ public class Renderer {
 
         SDL_SetRenderDrawColor(renderer, (byte)255, (byte)255, (byte)255, (byte)255);
 
+        // Loop through stored meshes and draw each of them
         for (Mesh mesh : renderQueue) {
             
             // Before buffering the renderer
@@ -103,7 +44,7 @@ public class Renderer {
             // Buffer rendering
             // For each face of the mesh draw it's triangles
             int[][] faces = mesh.faces;
-            BufferFaceTriangles(faces, trianglePool, renderer);
+            BufferFaceTriangles(faces, trianglePool, mesh, renderer);
         }
 
         // Render the current frame
@@ -127,19 +68,32 @@ public class Renderer {
             trianglePool[index] = vertex.copy();
 
             // Apply rotations
-            ProjectRotationMatricesToAngle(mesh.rotation);
-            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], rotationZ);
-            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], rotationX);
-            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], rotationY);
+            Projection.ProjectRotationMatricesToAngle(mesh.rotation);
+            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.rotationZ);
+            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.rotationX);
+            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.rotationY);
 
             // Apply local transformations
             trianglePool[index].sum(mesh.position);
             trianglePool[index].dot(mesh.scale);
 
+            trianglePool[index] = ApplyCameraProjection(trianglePool[index]);
+
             index++;
         }
 
         return trianglePool;
+    }
+
+    private static Vec3 ApplyCameraProjection(Vec3 origin){
+
+        Vec3 target = Vec3.FORWARD.copy();
+        Projection.ProjectRotationAlongYAxis(Camera.fYaw);
+        Camera.lookDirection = Utils.MultiplyMatrixVector(target, Projection.rotationY);
+        target = Camera.position.copy().sum(Camera.lookDirection);
+        Utils.MatrixPointAt(Camera.position.copy(), target, Vec3.UP);
+
+        return Utils.MultiplyMatrixVector(origin, Projection.cameraView);
     }
 
     // Efectuate the projection of the points in 3D space
@@ -148,18 +102,18 @@ public class Renderer {
         for (int j = 0; j < triangle.length; j++) {
 
             // Apply projection
-            triangle[j] = Utils.MultiplyMatrixVector(triangle[j], projectionMatrix);
+            triangle[j] = Utils.MultiplyMatrixVector(triangle[j], Projection.projectionMatrix);
             
             // Scale to normalized viewport
-            triangle[j].sum(normalizingTransformationPosition);
-            triangle[j].dot(normalizingTransformationScale);
+            triangle[j].sum(Projection.normalizingTransformationPosition);
+            triangle[j].dot(Projection.normalizingTransformationScale);
         }
 
         return triangle;
     }
 
     // Unlink the faces and buffer the rendering of the faces
-    private static void BufferFaceTriangles(int[][] faces, Vec3[] vertices, SDL_Renderer renderer){
+    private static void BufferFaceTriangles(int[][] faces, Vec3[] vertices, Mesh mesh, SDL_Renderer renderer){
 
         for (int i = 0; i < faces.length; i++) {
 
@@ -169,18 +123,19 @@ public class Renderer {
             
             // Normal calculation
             // Visibility is dependant on normal calculations
-            Vec3 normal = CalculateFaceNormal(triangle);
+            Vec3 normal = Utils.CalculateFaceNormal(triangle);
             
             // Invisible face
             // Skip projection and drawing
-            float visionAngleDifference = Vec3.DotProduct(normal, (triangle[0].copy().subtract(Camera.position)));
+            Vec3 cameraRay = (triangle[0].copy().subtract(Camera.position.copy()));
+            float visionAngleDifference = Vec3.DotProduct(normal, cameraRay);
             if(visionAngleDifference >= 0) continue;
 
             // Calculate lighting conditions from normal
-            Vec3 lightDirection = new Vec3(0,0,-1).normalized();
+            Vec3 lightDirection = cameraRay.invert().normalized();
             float lightProduct = Vec3.DotProduct(normal, lightDirection);
 
-            Color lightShade = Color.getLuminanceVariation(Utils.WHITE, lightProduct);
+            Color lightShade = Color.getLuminanceVariation(mesh.base, lightProduct);
             
             // Project the triangle points to screen space
             triangle = ProjectTriangleToScreen(triangle);
@@ -196,18 +151,6 @@ public class Renderer {
         }
     }
 
-    // Calculates the normal to a surface defined by 3 points
-    private static Vec3 CalculateFaceNormal(Vec3[] triangle){
-        
-        Vec3 line1, line2, normal = new Vec3();
-        line1 = triangle[1].copy().subtract(triangle[0].copy());
-        line2 = triangle[2].copy().subtract(triangle[0].copy());
-
-        normal = Vec3.CrossProduct(line1, line2).normalized();
-
-        return normal;
-    }
-
     // From the face vertex links, turn them to the cached vertex triangles
     private static Vec3[] UnlinkTriangleFaceVertices(int[] linkedface, Vec3[] vertices){
 
@@ -217,10 +160,6 @@ public class Renderer {
     // Draw a triangle to the screen
     private static void DrawTriangle(SDL_Renderer renderer, Vec3 point1, Vec3 point2, Vec3 point3){
 
-        // SDL_RenderDrawLine(renderer, (int) point1.x, (int) point1.y, (int) point2.x, (int) point2.y);
-        // SDL_RenderDrawLine(renderer, (int) point2.x, (int) point2.y, (int) point3.x, (int) point3.y);
-        // SDL_RenderDrawLine(renderer, (int) point3.x, (int) point3.y, (int) point1.x, (int) point1.y);
-
         BackBuffer.FillBufferLine(point1.x, point1.y, point2.x, point2.y, Utils.WHITE);
         BackBuffer.FillBufferLine(point2.x, point2.y, point3.x, point3.y, Utils.WHITE);
         BackBuffer.FillBufferLine(point3.x, point3.y, point1.x, point1.y, Utils.WHITE);
@@ -228,13 +167,6 @@ public class Renderer {
 
     // Fill the triangle's geometry
     private static void FillTriangle(SDL_Renderer renderer, Vec3 point1, Vec3 point2, Vec3 point3, Color color){
-
-        // List<SDL_Vertex> vertsGeometry = new ArrayList<SDL_Vertex>();
-        // vertsGeometry.add(Utils.ToVertex(point1, color.colorData));
-        // vertsGeometry.add(Utils.ToVertex(point2, color.colorData));
-        // vertsGeometry.add(Utils.ToVertex(point3, color.colorData));
-
-        // SDL_RenderGeometry(renderer, null, vertsGeometry, null);
 
         BackBuffer.FillBufferTriangle(point1, point2, point3, color);
     }

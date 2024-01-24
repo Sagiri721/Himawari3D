@@ -12,7 +12,8 @@ import static io.github.libsdl4j.api.video.SDL_WindowFlags.SDL_WINDOW_SHOWN;
 import static io.github.libsdl4j.api.video.SdlVideo.SDL_CreateWindow;
 import static io.github.libsdl4j.api.video.SdlVideoConst.SDL_WINDOWPOS_CENTERED;
 
-import com.himawari.HLA.Vec3;
+import com.himawari.Gfx.Renderer;
+import com.himawari.Input.Input;
 
 import io.github.libsdl4j.api.event.SDL_Event;
 import io.github.libsdl4j.api.render.SDL_Renderer;
@@ -26,7 +27,7 @@ public class Window {
 
     // Tick tracking
     public static long ticks, lastFrame, elapsedTime;
-    public static float fps, frameDelta;
+    public static double fps, frameDelta;
     
     public static void SetDimensions(int width, int height){
         
@@ -69,11 +70,14 @@ public class Window {
                     case SDL_QUIT:
                         running = false;
                         break;
+                    case SDL_KEYDOWN:
+                        Input.KeyDown(evt.key.keysym.sym);
+                        break;
                 }
             }
 
             // Realize tick operations
-            Window.frameDelta = System.currentTimeMillis() - Window.lastFrame;
+            Window.frameDelta = (System.currentTimeMillis() - Window.lastFrame) / 1000f;
             Window.lastFrame = System.currentTimeMillis();
 
             if (frameDelta > 0) Window.fps = 1 / (frameDelta / 1000);
@@ -82,7 +86,6 @@ public class Window {
             Window.elapsedTime += Window.frameDelta;
 
             Renderer.Render(renderer);
-            Renderer.renderQueue.get(0).rotation.sum(new Vec3(Window.frameDelta * 0.001f, Window.frameDelta * 0.001f, 0));
         }
 
         SDL_Quit();

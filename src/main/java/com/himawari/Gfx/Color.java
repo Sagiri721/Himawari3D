@@ -1,6 +1,4 @@
-package com.himawari;
-
-import java.util.Arrays;
+package com.himawari.Gfx;
 
 import com.himawari.HLA.Vec4;
 
@@ -20,11 +18,11 @@ public class Color {
     public static Color getLuminanceVariation(Color baseColor, float lum){
 
         return new Color(
-            (int)(lum*255), 
-            (int)(lum*255), 
-            (int)(lum*255), 
-            255
-        ).clampColor(20, 235);
+            (int)(lum*baseColor.colorData.x),
+            (int)(lum*baseColor.colorData.y),
+            (int)(lum*baseColor.colorData.z),
+            (int) baseColor.colorData.w
+        ).clampColor(0, 225);
     }
 
     public Color copy(){

@@ -1,8 +1,10 @@
-package com.himawari;
+package com.himawari.Gfx;
 
 import static io.github.libsdl4j.api.render.SdlRender.SDL_CreateTexture;
 import static io.github.libsdl4j.api.render.SdlRender.SDL_UpdateTexture;
 
+import com.himawari.Utils;
+import com.himawari.Window;
 import com.himawari.HLA.Vec3;
 import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
@@ -16,6 +18,7 @@ import io.github.libsdl4j.api.render.SDL_TextureAccess;
 
 public class BackBuffer {
 
+    // Buffer data
     public static int bufferWidth, bufferHeight;
     public static Color[] colorBuffer;
 
@@ -30,10 +33,21 @@ public class BackBuffer {
         ClearBackBuffer();
     }
 
-    public static void PutPixel(int x, int y, Color color){
+    public static void PutPixel(int x, int y, Color color, Vec3 v1, Vec3 v2, Vec3 v3){
 
         if(x < 0 || y < 0 || x >= bufferWidth || y >= bufferHeight) return;
-        BackBuffer.colorBuffer[x + y * bufferWidth] = color;
+
+        // When no surface is given skip Depth buffering
+        if(v1 == null || v2 == null || v3 == null)
+            BackBuffer.colorBuffer[x + y * bufferWidth] = color;
+        else{
+
+            // Calculate the pixel projection onto surface
+            float depth = ZBuffer.ProjectOntoToFace(v1, v2, v3, new Vec3(x, y, 0)).z;
+            boolean result = ZBuffer.TestAndSet(x, y, depth);
+
+            if(result) BackBuffer.colorBuffer[x + y * bufferWidth] = color;
+        }
     }
 
     public static void ClearBackBuffer(){
@@ -48,7 +62,7 @@ public class BackBuffer {
         int step = (int) (dx > dy ? dx : dy);
 
         if (step == 0) {
-            PutPixel((int) x1, (int) y1, fillValue);
+            PutPixel((int) x1, (int) y1, fillValue, null, null, null);
             return;
         }
 
@@ -61,14 +75,14 @@ public class BackBuffer {
         for (int i = 0; i <= step; i++) {
             if (y >= bufferHeight || x >= bufferWidth || x < 0 || y < 0) break;
             
-            PutPixel((int) x, (int) y, fillValue);
+            PutPixel((int) x, (int) y, fillValue, null, null, null);
 
             x += xIncrement;
             y += yIncrement;
         }
     }
 
-    // Barycentric Algorithm for filling triangles
+    // Simple algorithm for filling triangles
     public static void FillBufferTriangle(Vec3 v1, Vec3 v2, Vec3 v3, Color color) {
        
         int maxX = (int) Math.max(v1.x, Math.max(v2.x, v3.x));
@@ -80,12 +94,13 @@ public class BackBuffer {
             for (int y = minY; y <= maxY; y++) {
                 
                 if (PointInTriangle(new Vec3(x,y,0), v1, v2, v3)) {
-                    PutPixel(x, y, color);
+                    PutPixel(x, y, color, v1, v2, v3);
                 }
             }
         }
     }
 
+    // Check if point inside triangle
     private static boolean PointInTriangle (Vec3 pt, Vec3 v1, Vec3 v2, Vec3 v3) {
         
         float d1, d2, d3;
@@ -105,12 +120,7 @@ public class BackBuffer {
         return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y);
     }
 
-    private static Vec3[] SortVerticesByY(Vec3 v1, Vec3 v2, Vec3 v3) {
-        Vec3[] sortedVertices = { v1, v2, v3 };
-        Arrays.sort(sortedVertices, (a, b) -> Float.compare(a.y, b.y));
-        return sortedVertices;
-    }
-
+    // Turn current backbuffer into SDL_Texture
     public static SDL_Texture FetchTexture(SDL_Renderer renderer) {
 
         // Allocate the buffer of correct size
