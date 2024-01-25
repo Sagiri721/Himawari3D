@@ -18,7 +18,7 @@ import io.github.libsdl4j.api.keyboard.SdlKeyboard;
 
 public class Input {
 
-    static float moveSpeed = 20f;
+    static float moveSpeed = 12f;
 
     private static final int UpOffset = SdlKeyboard.SDL_GetScancodeFromKey(SDLK_UP);
     private static final int DownOffset = SdlKeyboard.SDL_GetScancodeFromKey(SDLK_DOWN);

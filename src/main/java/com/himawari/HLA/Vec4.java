@@ -139,6 +139,10 @@ public class Vec4 implements Comparable<Vec4> {
         return this;
     }
 
+    public Vec3 slice(){
+        return new Vec3(x,y,z);
+    }
+
     @Override
     public String toString(){ return "("+x+", "+ y +", "+z+", "+w+")"; }
     public String Format(){ return "("+x+", "+ y +", "+z+", "+w+")"; }

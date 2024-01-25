@@ -7,11 +7,14 @@ import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderPresent;
 import static io.github.libsdl4j.api.render.SdlRender.SDL_SetRenderDrawColor;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.himawari.Camera;
 import com.himawari.Mesh;
 import com.himawari.Utils;
+import com.himawari.Window;
+import com.himawari.HLA.Triangle;
 import com.himawari.HLA.Vec3;
 
 import io.github.libsdl4j.api.render.SDL_Renderer;
@@ -100,16 +103,16 @@ public class Renderer {
     }
 
     // Efectuate the projection of the points in 3D space
-    private static Vec3[] ProjectTriangleToScreen(Vec3[] triangle){
-        
-        for (int j = 0; j < triangle.length; j++) {
+    private static Triangle ProjectTriangleToScreen(Triangle triangle){
+
+        for (int j = 0; j < 3; j++) {
 
             // Apply projection
-            triangle[j] = Utils.MultiplyMatrixVector(triangle[j], Projection.projectionMatrix);
+            triangle.set(j, Utils.MultiplyMatrixVector(triangle.get(j), Projection.projectionMatrix));
             
             // Scale to normalized viewport
-            triangle[j].sum(Projection.normalizingTransformationPosition);
-            triangle[j].dot(Projection.normalizingTransformationScale);
+            triangle.get(j).sum(Projection.normalizingTransformationPosition);
+            triangle.get(j).dot(Projection.normalizingTransformationScale);
         }
 
         return triangle;
@@ -122,7 +125,7 @@ public class Renderer {
 
             // 3D points that compose the trinagle face unlinked
             // Efectuate the projection
-            Vec3[] triangle = UnlinkTriangleFaceVertices(faces[i], vertices);
+            Triangle triangle = UnlinkTriangleFaceVertices(faces[i], vertices);
             
             // Normal calculation
             // Visibility is dependant on normal calculations
@@ -130,7 +133,7 @@ public class Renderer {
             
             // Invisible face
             // Skip projection and drawing
-            Vec3 cameraRay = (triangle[0].copy().subtract(Camera.position.copy()));
+            Vec3 cameraRay = (triangle.get(0).copy().subtract(Camera.position.copy()));
             // float visionAngleDifference = Vec3.DotProduct(normal, cameraRay);
             // if (visionAngleDifference < 1) {
             //     // The surface is facing away from the camera, so continue processing
@@ -143,38 +146,107 @@ public class Renderer {
             float lightProduct = Vec3.DotProduct(normal, lightDirection);
 
             Color lightShade = Color.getLuminanceVariation(mesh.base, lightProduct);
-            
-            // Project the triangle points to screen space
-            triangle = ProjectTriangleToScreen(triangle);
 
-            // Buffer the face triangle
-            FillTriangle(
-                renderer, 
-                triangle[0],
-                triangle[1],
-                triangle[2],
-                lightShade
-            );
+            // Apply triangle clipping against near plane
+            Triangle[] rasterQueue = ClipTriangleToFace(triangle, new Vec3(0,0, Projection.zNear), Vec3.FORWARD.copy());
+
+            for (Triangle triangleToRaster : rasterQueue) {
+                
+                // Project the triangle points to screen space
+                triangleToRaster = ProjectTriangleToScreen(triangleToRaster);
+
+                // Draw all the properly spli troiangles yo fit the screen
+                for (Triangle screenSplitTriangle : ClipTrianglesToScreen(triangleToRaster)) {
+                    
+                    // Buffer the face triangle
+                    Graphics.FillTriangle(renderer, screenSplitTriangle, lightShade);
+                }
+    
+            }
         }
     }
 
+    private static List<Triangle> ClipTrianglesToScreen(Triangle triangleToRaster){
+
+        // Final screen clip
+        Triangle[] clippingOutput = new Triangle[2];
+
+        List<Triangle> triangleSplits = new ArrayList<Triangle>();
+
+        triangleSplits.add(triangleToRaster);
+
+        int nNewTriangles = 1;
+        int nTrianglesToAdd = 0;
+        for (int j = 0; j < 4; j++) {
+            
+            while (nNewTriangles > 0) {
+
+                // Take triangle from front of the queue
+                Triangle testing = triangleSplits.getFirst();
+                triangleSplits.removeFirst();
+                nNewTriangles--;
+
+                clippingOutput[0] = new Triangle();
+                clippingOutput[1] = new Triangle();
+
+                /*
+                Clip againt a plane
+                We only need to test new planes against new triangles, as all the previous one's will always be
+                already inside the test plane
+                */
+
+                switch (j) {
+                    case 0: nTrianglesToAdd = Utils.ClipTriangleAgainstPlane(Vec3.ZERO.copy(), Vec3.UP.copy(), testing, clippingOutput[0], clippingOutput[1]); break;
+                    case 1: nTrianglesToAdd = Utils.ClipTriangleAgainstPlane(new Vec3(0, Window.height - 1, 0), Vec3.DOWN.copy(), testing, clippingOutput[0], clippingOutput[1]); break;
+                    case 2: nTrianglesToAdd = Utils.ClipTriangleAgainstPlane(Vec3.ZERO, Vec3.RIGHT.copy(), testing, clippingOutput[0], clippingOutput[1]); break;
+                    case 3: nTrianglesToAdd = Utils.ClipTriangleAgainstPlane(new Vec3(Window.width - 1, 0, 0), Vec3.LEFT.copy(), testing, clippingOutput[0], clippingOutput[1]); break;
+                }
+
+                // After clipping, a variable number of triangles is  yielded
+                // Add these new ones to the back of the queue
+                // Until all triangles are inside the screen
+                for (int i = 0; i < nTrianglesToAdd; i++) {
+                    triangleSplits.add(clippingOutput[i].copy());
+                }
+            }
+
+            nNewTriangles = triangleSplits.size();
+        }
+
+        return triangleSplits;
+    }
+
+    // Givan a triangle to clip and a plane, clip it into the necessary triangles
+    private static Triangle[] ClipTriangleToFace(Triangle triangle, Vec3 clipPlane, Vec3 clipNormal){
+            
+        // Number of triangles that need to be rastered pos-clipping
+        int nClippedTriangles = 0;
+        // Initialize empty triangle array with all the 2 possible outcomes
+        Triangle[] clippingOutput = new Triangle[2];
+        clippingOutput[0] = new Triangle();
+        clippingOutput[1] = new Triangle();
+
+        // Get the processed triangle output and store it as a reference on the triangle array
+        nClippedTriangles = Utils.ClipTriangleAgainstPlane(
+            /* Plane to clip againts, the zNear plane */
+            clipPlane, 
+            /* Clipping plane normal */
+            clipNormal, 
+            triangle,
+            clippingOutput[0], 
+            clippingOutput[1]
+        );
+
+        // Prepare output raster queue
+        Triangle[] rasterQueue = new Triangle[nClippedTriangles];
+        for (int j = 0; j < rasterQueue.length; j++) { rasterQueue[j] = clippingOutput[j]; }
+
+        return rasterQueue;
+    }
+
     // From the face vertex links, turn them to the cached vertex triangles
-    private static Vec3[] UnlinkTriangleFaceVertices(int[] linkedface, Vec3[] vertices){
+    private static Triangle UnlinkTriangleFaceVertices(int[] linkedface, Vec3[] vertices){
 
-        return new Vec3[]{vertices[(int) linkedface[0]], vertices[(int) linkedface[1]], vertices[(int) linkedface[2]]};
-    }
-
-    // Draw a triangle to the screen
-    private static void DrawTriangle(SDL_Renderer renderer, Vec3 point1, Vec3 point2, Vec3 point3){
-
-        BackBuffer.FillBufferLine(point1.x, point1.y, point2.x, point2.y, Utils.WHITE);
-        BackBuffer.FillBufferLine(point2.x, point2.y, point3.x, point3.y, Utils.WHITE);
-        BackBuffer.FillBufferLine(point3.x, point3.y, point1.x, point1.y, Utils.WHITE);
-    }
-
-    // Fill the triangle's geometry
-    private static void FillTriangle(SDL_Renderer renderer, Vec3 point1, Vec3 point2, Vec3 point3, Color color){
-
-        BackBuffer.FillBufferTriangle(point1, point2, point3, color);
+        return new Triangle(vertices[(int) linkedface[0]], vertices[(int) linkedface[1]], vertices[(int) linkedface[2]]);
     }
 }
