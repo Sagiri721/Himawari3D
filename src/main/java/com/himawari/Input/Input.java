@@ -12,25 +12,38 @@ import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_W;
 import com.himawari.Camera;
 import com.himawari.Window;
 import com.himawari.HLA.Vec3;
+import com.sun.jna.Pointer;
+
+import io.github.libsdl4j.api.keyboard.SdlKeyboard;
 
 public class Input {
 
-    static float moveSpeed = 10f;
+    static float moveSpeed = 20f;
 
-    public static void KeyDown(int key){
+    private static final int UpOffset = SdlKeyboard.SDL_GetScancodeFromKey(SDLK_UP);
+    private static final int DownOffset = SdlKeyboard.SDL_GetScancodeFromKey(SDLK_DOWN);
+    private static final int RightOffset = SdlKeyboard.SDL_GetScancodeFromKey(SDLK_RIGHT);
+    private static final int LeftOffset = SdlKeyboard.SDL_GetScancodeFromKey(SDLK_LEFT);
 
-        if (key == SDLK_UP) Camera.position.y += 10 * Window.frameDelta;
-        if (key == SDLK_DOWN) Camera.position.y -= 10 * Window.frameDelta;
+    private static final int WOffset = SdlKeyboard.SDL_GetScancodeFromKey(SDLK_W);
+    private static final int SOffset = SdlKeyboard.SDL_GetScancodeFromKey(SDLK_S);
+    private static final int AOffset = SdlKeyboard.SDL_GetScancodeFromKey(SDLK_A);
+    private static final int DOffset = SdlKeyboard.SDL_GetScancodeFromKey(SDLK_D);
 
-        if (key == SDLK_RIGHT) Camera.position.x += 10 * Window.frameDelta;
-        if (key == SDLK_LEFT) Camera.position.x -= 10 * Window.frameDelta;
+    public static void KeyDown(Pointer keyStates){
+
+        if (keyStates.getByte(UpOffset) != 0) Camera.position.y += moveSpeed * Window.frameDelta;
+        if (keyStates.getByte(DownOffset) != 0) Camera.position.y -= moveSpeed * Window.frameDelta;
+
+        if (keyStates.getByte(RightOffset) != 0) Camera.position.x -= moveSpeed * Window.frameDelta;
+        if (keyStates.getByte(LeftOffset) != 0) Camera.position.x += moveSpeed * Window.frameDelta;
 
         Vec3 vforward = Camera.lookDirection.copy().scale(moveSpeed).scale((float) Window.frameDelta);
 
-        if(key == SDLK_W) Camera.position.sum(vforward);
-        if(key == SDLK_S) Camera.position.subtract(vforward);
+        if (keyStates.getByte(WOffset) != 0) Camera.position.sum(vforward);
+        if (keyStates.getByte(SOffset) != 0) Camera.position.subtract(vforward);
 
-        if(key == SDLK_A) Camera.fYaw += 3 * Window.frameDelta;
-        if(key == SDLK_D) Camera.fYaw -= 3 * Window.frameDelta;
+        if (keyStates.getByte(AOffset) != 0) Camera.fYaw -= 2 * Window.frameDelta;
+        if (keyStates.getByte(DOffset) != 0) Camera.fYaw += 2 * Window.frameDelta;
     }
 }

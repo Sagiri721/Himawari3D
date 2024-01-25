@@ -22,7 +22,7 @@ public class Color {
             (int)(lum*baseColor.colorData.y),
             (int)(lum*baseColor.colorData.z),
             (int) baseColor.colorData.w
-        ).clampColor(0, 225);
+        ).clampColor(30, 225);
     }
 
     public Color copy(){

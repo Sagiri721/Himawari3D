@@ -14,10 +14,16 @@ import static io.github.libsdl4j.api.video.SdlVideoConst.SDL_WINDOWPOS_CENTERED;
 
 import com.himawari.Gfx.Renderer;
 import com.himawari.Input.Input;
+import com.sun.jna.Pointer;
 
 import io.github.libsdl4j.api.event.SDL_Event;
+import io.github.libsdl4j.api.keyboard.SdlKeyboard;
+import io.github.libsdl4j.api.keycode.SDL_Keycode;
+import io.github.libsdl4j.api.keycode.SdlKeycode;
 import io.github.libsdl4j.api.render.SDL_Renderer;
 import io.github.libsdl4j.api.video.SDL_Window;
+
+import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_UP;
 
 public class Window {
 
@@ -70,11 +76,11 @@ public class Window {
                     case SDL_QUIT:
                         running = false;
                         break;
-                    case SDL_KEYDOWN:
-                        Input.KeyDown(evt.key.keysym.sym);
-                        break;
                 }
             }
+
+            Pointer keyStates = SdlKeyboard.SDL_GetKeyboardState(null);
+            Input.KeyDown(keyStates);
 
             // Realize tick operations
             Window.frameDelta = (System.currentTimeMillis() - Window.lastFrame) / 1000f;

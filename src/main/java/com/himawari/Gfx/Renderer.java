@@ -34,6 +34,9 @@ public class Renderer {
 
         SDL_SetRenderDrawColor(renderer, (byte)255, (byte)255, (byte)255, (byte)255);
 
+        // Set camera position for this frame
+        ApplyCameraProjection();
+
         // Loop through stored meshes and draw each of them
         for (Mesh mesh : renderQueue) {
             
@@ -77,7 +80,7 @@ public class Renderer {
             trianglePool[index].sum(mesh.position);
             trianglePool[index].dot(mesh.scale);
 
-            trianglePool[index] = ApplyCameraProjection(trianglePool[index]);
+            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.cameraView);
 
             index++;
         }
@@ -85,15 +88,15 @@ public class Renderer {
         return trianglePool;
     }
 
-    private static Vec3 ApplyCameraProjection(Vec3 origin){
+    private static void ApplyCameraProjection(){
 
         Vec3 target = Vec3.FORWARD.copy();
         Projection.ProjectRotationAlongYAxis(Camera.fYaw);
+
         Camera.lookDirection = Utils.MultiplyMatrixVector(target, Projection.rotationY);
         target = Camera.position.copy().sum(Camera.lookDirection);
-        Utils.MatrixPointAt(Camera.position.copy(), target, Vec3.UP);
 
-        return Utils.MultiplyMatrixVector(origin, Projection.cameraView);
+        Utils.MatrixPointAt(Camera.position.copy(), target, Vec3.UP);
     }
 
     // Efectuate the projection of the points in 3D space
@@ -128,8 +131,12 @@ public class Renderer {
             // Invisible face
             // Skip projection and drawing
             Vec3 cameraRay = (triangle[0].copy().subtract(Camera.position.copy()));
-            float visionAngleDifference = Vec3.DotProduct(normal, cameraRay);
-            if(visionAngleDifference >= 0) continue;
+            // float visionAngleDifference = Vec3.DotProduct(normal, cameraRay);
+            // if (visionAngleDifference < 1) {
+            //     // The surface is facing away from the camera, so continue processing
+            //     // (or you may want to skip rendering depending on your needs)
+            //     continue;
+            // }
 
             // Calculate lighting conditions from normal
             Vec3 lightDirection = cameraRay.invert().normalized();
