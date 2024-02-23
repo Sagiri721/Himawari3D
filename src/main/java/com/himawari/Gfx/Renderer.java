@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.himawari.Camera;
+import com.himawari.Clipping;
 import com.himawari.Mesh;
 import com.himawari.Utils;
 import com.himawari.Window;
@@ -38,7 +39,7 @@ public class Renderer {
         SDL_SetRenderDrawColor(renderer, (byte)255, (byte)255, (byte)255, (byte)255);
 
         // Set camera position for this frame
-        ApplyCameraProjection();
+        DefineCameraProjection();
 
         // Loop through stored meshes and draw each of them
         for (Mesh mesh : renderQueue) {
@@ -74,16 +75,17 @@ public class Renderer {
             trianglePool[index] = vertex.copy();
 
             // Apply rotations
+            // Apply rotations
             Projection.ProjectRotationMatricesToAngle(mesh.rotation);
-            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.rotationZ);
-            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.rotationX);
-            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.rotationY);
-
+            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.rotationX, false);
+            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.rotationZ, false);
+            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.rotationY, false);
+            
             // Apply local transformations
-            trianglePool[index].sum(mesh.position);
-            trianglePool[index].dot(mesh.scale);
+            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.MakeScale(mesh.scale), false);
+            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.MakeTranslation(mesh.position), false);
 
-            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.cameraView);
+            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.cameraView, false);
 
             index++;
         }
@@ -91,12 +93,12 @@ public class Renderer {
         return trianglePool;
     }
 
-    private static void ApplyCameraProjection(){
+    private static void DefineCameraProjection(){
 
         Vec3 target = Vec3.FORWARD.copy();
         Projection.ProjectRotationAlongYAxis(Camera.fYaw);
 
-        Camera.lookDirection = Utils.MultiplyMatrixVector(target, Projection.rotationY);
+        Camera.lookDirection = Utils.MultiplyMatrixVector(target, Projection.rotationY, false);
         target = Camera.position.copy().sum(Camera.lookDirection);
 
         Utils.MatrixPointAt(Camera.position.copy(), target, Vec3.UP);
@@ -108,7 +110,7 @@ public class Renderer {
         for (int j = 0; j < 3; j++) {
 
             // Apply projection
-            triangle.set(j, Utils.MultiplyMatrixVector(triangle.get(j), Projection.projectionMatrix));
+            triangle.set(j, Utils.MultiplyMatrixVector(triangle.get(j), Projection.projectionMatrix, true));
             
             // Scale to normalized viewport
             triangle.get(j).sum(Projection.normalizingTransformationPosition);
@@ -142,13 +144,13 @@ public class Renderer {
             // }
 
             // Calculate lighting conditions from normal
-            Vec3 lightDirection = cameraRay.invert().normalized();
+            Vec3 lightDirection = new Vec3(0,0,-1);
             float lightProduct = Vec3.DotProduct(normal, lightDirection);
 
             Color lightShade = Color.getLuminanceVariation(mesh.base, lightProduct);
 
             // Apply triangle clipping against near plane
-            Triangle[] rasterQueue = ClipTriangleToFace(triangle, new Vec3(0,0, Projection.zNear), Vec3.FORWARD.copy());
+            Triangle[] rasterQueue = Clipping.ClipTriangleToFace(triangle, new Vec3(0,0, Projection.zNear), Vec3.FORWARD.copy());
 
             for (Triangle triangleToRaster : rasterQueue) {
                 
@@ -156,7 +158,7 @@ public class Renderer {
                 triangleToRaster = ProjectTriangleToScreen(triangleToRaster);
 
                 // Draw all the properly spli troiangles yo fit the screen
-                for (Triangle screenSplitTriangle : ClipTrianglesToScreen(triangleToRaster)) {
+                for (Triangle screenSplitTriangle : Clipping.ClipTrianglesToScreen(triangleToRaster)) {
                     
                     // Buffer the face triangle
                     Graphics.FillTriangle(renderer, screenSplitTriangle, lightShade);
@@ -164,84 +166,6 @@ public class Renderer {
     
             }
         }
-    }
-
-    private static List<Triangle> ClipTrianglesToScreen(Triangle triangleToRaster){
-
-        // Final screen clip
-        Triangle[] clippingOutput = new Triangle[2];
-
-        List<Triangle> triangleSplits = new ArrayList<Triangle>();
-
-        triangleSplits.add(triangleToRaster);
-
-        int nNewTriangles = 1;
-        int nTrianglesToAdd = 0;
-        for (int j = 0; j < 4; j++) {
-            
-            while (nNewTriangles > 0) {
-
-                // Take triangle from front of the queue
-                Triangle testing = triangleSplits.getFirst();
-                triangleSplits.removeFirst();
-                nNewTriangles--;
-
-                clippingOutput[0] = new Triangle();
-                clippingOutput[1] = new Triangle();
-
-                /*
-                Clip againt a plane
-                We only need to test new planes against new triangles, as all the previous one's will always be
-                already inside the test plane
-                */
-
-                switch (j) {
-                    case 0: nTrianglesToAdd = Utils.ClipTriangleAgainstPlane(Vec3.ZERO.copy(), Vec3.UP.copy(), testing, clippingOutput[0], clippingOutput[1]); break;
-                    case 1: nTrianglesToAdd = Utils.ClipTriangleAgainstPlane(new Vec3(0, Window.height - 1, 0), Vec3.DOWN.copy(), testing, clippingOutput[0], clippingOutput[1]); break;
-                    case 2: nTrianglesToAdd = Utils.ClipTriangleAgainstPlane(Vec3.ZERO, Vec3.RIGHT.copy(), testing, clippingOutput[0], clippingOutput[1]); break;
-                    case 3: nTrianglesToAdd = Utils.ClipTriangleAgainstPlane(new Vec3(Window.width - 1, 0, 0), Vec3.LEFT.copy(), testing, clippingOutput[0], clippingOutput[1]); break;
-                }
-
-                // After clipping, a variable number of triangles is  yielded
-                // Add these new ones to the back of the queue
-                // Until all triangles are inside the screen
-                for (int i = 0; i < nTrianglesToAdd; i++) {
-                    triangleSplits.add(clippingOutput[i].copy());
-                }
-            }
-
-            nNewTriangles = triangleSplits.size();
-        }
-
-        return triangleSplits;
-    }
-
-    // Givan a triangle to clip and a plane, clip it into the necessary triangles
-    private static Triangle[] ClipTriangleToFace(Triangle triangle, Vec3 clipPlane, Vec3 clipNormal){
-            
-        // Number of triangles that need to be rastered pos-clipping
-        int nClippedTriangles = 0;
-        // Initialize empty triangle array with all the 2 possible outcomes
-        Triangle[] clippingOutput = new Triangle[2];
-        clippingOutput[0] = new Triangle();
-        clippingOutput[1] = new Triangle();
-
-        // Get the processed triangle output and store it as a reference on the triangle array
-        nClippedTriangles = Utils.ClipTriangleAgainstPlane(
-            /* Plane to clip againts, the zNear plane */
-            clipPlane, 
-            /* Clipping plane normal */
-            clipNormal, 
-            triangle,
-            clippingOutput[0], 
-            clippingOutput[1]
-        );
-
-        // Prepare output raster queue
-        Triangle[] rasterQueue = new Triangle[nClippedTriangles];
-        for (int j = 0; j < rasterQueue.length; j++) { rasterQueue[j] = clippingOutput[j]; }
-
-        return rasterQueue;
     }
 
     // From the face vertex links, turn them to the cached vertex triangles

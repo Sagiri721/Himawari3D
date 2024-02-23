@@ -19,14 +19,6 @@ import com.himawari.HLA.Vec4;
 import io.github.libsdl4j.api.render.SDL_Vertex;
 
 public class Utils {
-
-    // Frequent colors
-    public static final Color BLACK = new Color(0,0,0,255);
-    public static final Color WHITE = new Color(255,255,255,255);
-    
-    public static final Color RED = new Color(255,0,0,255);
-    public static final Color GREEN = new Color(0,255,0,255);
-    public static final Color BLUE = new Color(0,0,255,255);
     
     // Return the contents of a text file
     public static String GetFileContents(String filename) throws IOException{
@@ -58,7 +50,7 @@ public class Utils {
     }
 
     // Project 3D vector
-    public static Vec3 MultiplyMatrixVector(Vec3 input, Mat4 matrix){
+    public static Vec3 MultiplyMatrixVector(Vec3 input, Mat4 matrix, boolean divide){
 
         Vec3 output = new Vec3();
         output.x = input.x * matrix.m[0][0] + input.y * matrix.m[1][0] + input.z * matrix.m[2][0] + matrix.m[3][0];
@@ -67,11 +59,14 @@ public class Utils {
         
         float w = input.x * matrix.m[0][3] + input.y * matrix.m[1][3] + input.z * matrix.m[2][3] + matrix.m[3][3];
 
-        if(w == 0) {return output;}
-
-        output.x /= w;
-        output.y /= w;
-        output.z /= w;
+        if(divide){        
+    
+            if(w == 0) {return output;}
+    
+            output.x /= w;
+            output.y /= w;
+            output.z /= w;
+        }
 
         return output;
     }
@@ -82,7 +77,7 @@ public class Utils {
         Vec3 newForward = target.copy().subtract(position).normalized();
         // Calculate new upwards direction
         Vec3 a = newForward.copy().scale(Vec3.DotProduct(up, newForward));
-        Vec3 newUp = up.copy().subtract(a).normalized().invert();
+        Vec3 newUp = up.copy().subtract(a).invert().normalized();
 
         // New right direction is the cross product of the two previous vectors
         Vec3 newRight = Vec3.CrossProduct(newUp, newForward);
@@ -90,7 +85,7 @@ public class Utils {
         // Apply matrix transformations of camera behaviour
         // look into wtf this does cuz i have no idea :3
         Projection.ProjectCameraViewToAxis(newForward, newUp, newRight, position);
-        Projection.ProjectCameraViewToAxisInvert();
+        Projection.InvertCameraMatrix();
     }
 
     // Calculates the normal to a surface defined by 3 points

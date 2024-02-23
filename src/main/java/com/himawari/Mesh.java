@@ -17,7 +17,7 @@ public class Mesh {
     public Vec3 rotation = new Vec3(0,0,0);
     public Vec3 position = new Vec3(1, 1, 15);
 
-    public Color base = Utils.WHITE;
+    public Color base = Color.WHITE;
     
     public Vec3[] vertices;
     public int[][] faces;

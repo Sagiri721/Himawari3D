@@ -55,6 +55,8 @@ public class Projection {
 
     public static void ProjectRotationAlongZAxis(float angle){
 
+        angle = angle * 0.5f;
+
         rotationZ.Set(0, 0, (float) Math.cos(angle));
         rotationZ.Set(0, 1, (float) Math.sin(angle));
         rotationZ.Set(1, 0, (float) -Math.sin(angle));
@@ -88,57 +90,52 @@ public class Projection {
         cameraView.Set(0, 0, right.x);
         cameraView.Set(0, 1, right.y);
         cameraView.Set(0, 2, right.z);
+        cameraView.Set(0, 3, -Vec3.DotProduct(right, position));
         cameraView.Set(1, 0, up.x);
         cameraView.Set(1, 1, up.y);
         cameraView.Set(1, 2, up.z);
+        cameraView.Set(1, 3, -Vec3.DotProduct(up, position));
         cameraView.Set(2, 0, forward.x);
         cameraView.Set(2, 1, forward.y);
         cameraView.Set(2, 2, forward.z);
-        cameraView.Set(3, 0, position.x);
-        cameraView.Set(3, 1, position.y);
-        cameraView.Set(3, 2, position.z);
-        
-        cameraView.Set(3, 3, 1f);
+        cameraView.Set(2, 3, -Vec3.DotProduct(forward, position));
+        cameraView.Set(3, 3, 1);
     }
 
-    public static void ProjectCameraViewToAxisInvert(){
+    public static void InvertCameraMatrix(){
 
-        Mat4 tempMatrix = new Mat4(cameraView.m); 
+        Mat4 invertedMatrix = new Mat4(0f);
+        invertedMatrix.Set(0, 0, cameraView.Get(0, 0));
+        invertedMatrix.Set(0, 1, cameraView.Get(1, 0));
+        invertedMatrix.Set(0, 2, cameraView.Get(2, 0));
+        invertedMatrix.Set(1, 0, cameraView.Get(0, 1));
+        invertedMatrix.Set(1, 1, cameraView.Get(1, 1));
+        invertedMatrix.Set(1, 2, cameraView.Get(2, 1));
+        invertedMatrix.Set(2, 0, cameraView.Get(0, 2));
+        invertedMatrix.Set(2, 1, cameraView.Get(1, 2));
+        invertedMatrix.Set(2, 2, cameraView.Get(2, 2));
+        invertedMatrix.Set(3, 0, cameraView.Get(0, 3));
+        invertedMatrix.Set(3, 1, cameraView.Get(1, 3));
+        invertedMatrix.Set(3, 2, cameraView.Get(2, 3));
+        invertedMatrix.Set(3, 3, 1);
+        cameraView = invertedMatrix;
+    }
 
-        tempMatrix.Set(0, 0, cameraView.Get(0, 0));
-        tempMatrix.Set(0, 1, cameraView.Get(1, 0));
-        tempMatrix.Set(0, 2, cameraView.Get(2, 0));
-        tempMatrix.Set(0, 3, 0.0f);
-    
-        tempMatrix.Set(1, 0, cameraView.Get(0, 1));
-        tempMatrix.Set(1, 1, cameraView.Get(1, 1));
-        tempMatrix.Set(1, 2, cameraView.Get(2, 1));
-        tempMatrix.Set(1, 3, 0.0f);
-    
-        tempMatrix.Set(2, 0, cameraView.Get(0, 2));
-        tempMatrix.Set(2, 1, cameraView.Get(1, 2));
-        tempMatrix.Set(2, 2, cameraView.Get(2, 2));
-        tempMatrix.Set(2, 3, 0.0f);
-    
-        tempMatrix.Set(3, 0, -(
-                cameraView.Get(3, 0) * tempMatrix.Get(0, 0) +
-                cameraView.Get(3, 1) * tempMatrix.Get(1, 0) +
-                cameraView.Get(3, 2) * tempMatrix.Get(2, 0)
-        ));
-    
-        tempMatrix.Set(3, 1, -(
-                cameraView.Get(3, 0) * tempMatrix.Get(0, 1) +
-                cameraView.Get(3, 1) * tempMatrix.Get(1, 1) +
-                cameraView.Get(3, 2) * tempMatrix.Get(2, 1)
-        ));
-    
-        tempMatrix.Set(3, 2, -(
-                cameraView.Get(3, 0) * tempMatrix.Get(0, 2) +
-                cameraView.Get(3, 1) * tempMatrix.Get(1, 2) +
-                cameraView.Get(3, 2) * tempMatrix.Get(2, 2)
-        ));
-    
-        tempMatrix.Set(3, 3, 1.0f);
-        cameraView.Set(tempMatrix.m);
+    public static Mat4 MakeScale(Vec3 scale) {
+        
+        Mat4 scaleMatrix = new Mat4(1f);   
+        scaleMatrix.Set(0, 0, scale.x);
+        scaleMatrix.Set(1, 1, scale.y);
+        scaleMatrix.Set(2, 2, scale.z);
+        return scaleMatrix;
+    }
+
+    public static Mat4 MakeTranslation(Vec3 translation) {
+        
+        Mat4 translationMatrix = new Mat4(1f);
+        translationMatrix.Set(3, 0, translation.x);
+        translationMatrix.Set(3, 1, translation.y);
+        translationMatrix.Set(3, 2, translation.z);
+        return translationMatrix;
     }
 }

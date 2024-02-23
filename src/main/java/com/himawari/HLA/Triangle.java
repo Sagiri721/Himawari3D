@@ -7,7 +7,7 @@ public class Triangle {
 
     // Triangle vertices
     public Vec3[] vertices = new Vec3[3];
-    public Color col = Utils.WHITE;
+    public Color col = Color.WHITE;
 
     public Triangle(Vec3 vertex1, Vec3 vertex2, Vec3 vertex3){
         

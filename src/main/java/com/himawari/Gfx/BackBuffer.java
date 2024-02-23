@@ -51,7 +51,7 @@ public class BackBuffer {
     }
 
     public static void ClearBackBuffer(){
-        Arrays.fill(colorBuffer, Utils.BLACK);
+        Arrays.fill(colorBuffer, Color.BLACK);
     }
     
     public static void FillBufferLine(float x1, float y1, float x2, float y2, Color fillValue){

@@ -1,6 +1,7 @@
 package com.himawari;
 
 import com.himawari.Gfx.BackBuffer;
+import com.himawari.Gfx.Color;
 import com.himawari.Gfx.Projection;
 import com.himawari.Gfx.Renderer;
 import com.himawari.Gfx.ZBuffer;
@@ -17,7 +18,8 @@ public class Main {
         ZBuffer.Init();
 
         // Rendering shit
-        Mesh cube = Mesh.LoadFrom("models/axis.obj");
+        Mesh cube = Mesh.LoadFrom("models/teapot.obj");
+        cube.base = Color.GREEN;
 
         Renderer.renderQueue.add(cube);
         
