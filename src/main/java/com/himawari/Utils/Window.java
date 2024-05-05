@@ -1,4 +1,4 @@
-package com.himawari;
+package com.himawari.Utils;
 
 import static io.github.libsdl4j.api.Sdl.SDL_Init;
 import static io.github.libsdl4j.api.Sdl.SDL_Quit;
@@ -18,12 +18,8 @@ import com.sun.jna.Pointer;
 
 import io.github.libsdl4j.api.event.SDL_Event;
 import io.github.libsdl4j.api.keyboard.SdlKeyboard;
-import io.github.libsdl4j.api.keycode.SDL_Keycode;
-import io.github.libsdl4j.api.keycode.SdlKeycode;
 import io.github.libsdl4j.api.render.SDL_Renderer;
 import io.github.libsdl4j.api.video.SDL_Window;
-
-import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_UP;
 
 public class Window {
 

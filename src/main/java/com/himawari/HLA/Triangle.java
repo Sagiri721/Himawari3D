@@ -1,7 +1,7 @@
 package com.himawari.HLA;
 
-import com.himawari.Utils;
 import com.himawari.Gfx.Color;
+import com.himawari.Utils.Utils;
 
 public class Triangle {
 

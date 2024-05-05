@@ -1,4 +1,4 @@
-package com.himawari;
+package com.himawari.Utils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -75,12 +75,13 @@ public class Utils {
 
         // Calculate new forward direction
         Vec3 newForward = target.copy().subtract(position).normalized();
+
         // Calculate new upwards direction
         Vec3 a = newForward.copy().scale(Vec3.DotProduct(up, newForward));
-        Vec3 newUp = up.copy().subtract(a).invert().normalized();
+        Vec3 newUp = up.copy().subtract(a).flip(1).normalized();
 
         // New right direction is the cross product of the two previous vectors
-        Vec3 newRight = Vec3.CrossProduct(newUp, newForward);
+        Vec3 newRight = Vec3.CrossProduct(newUp, newForward).normalized();
 
         // Apply matrix transformations of camera behaviour
         // look into wtf this does cuz i have no idea :3

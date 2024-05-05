@@ -1,10 +1,12 @@
-package com.himawari;
+package com.himawari.Camera;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import com.himawari.HLA.Triangle;
 import com.himawari.HLA.Vec3;
+import com.himawari.Utils.Utils;
+import com.himawari.Utils.Window;
 
 public class Clipping {
 

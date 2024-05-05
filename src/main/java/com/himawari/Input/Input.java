@@ -9,9 +9,9 @@ import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_S;
 import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_UP;
 import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_W;
 
-import com.himawari.Camera;
-import com.himawari.Window;
+import com.himawari.Camera.Camera;
 import com.himawari.HLA.Vec3;
+import com.himawari.Utils.Window;
 import com.sun.jna.Pointer;
 
 import io.github.libsdl4j.api.keyboard.SdlKeyboard;

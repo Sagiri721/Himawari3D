@@ -1,21 +1,21 @@
-package com.himawari;
+package com.himawari.Gfx;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.himawari.Gfx.Color;
+import com.himawari.HLA.Triangle;
 import com.himawari.HLA.Vec3;
+import com.himawari.Utils.Transform;
+import com.himawari.Utils.Utils;
 
 public class Mesh {
 
     public static final String VERTEX_CUE = "v";
     public static final String FACE_CUE = "f";
 
-    public Vec3 scale = new Vec3(1, 1, 1);
-    public Vec3 rotation = new Vec3(0,0,0);
-    public Vec3 position = new Vec3(1, 1, 15);
+    public Transform transform = new Transform();
 
     public Color base = Color.WHITE;
     
@@ -23,6 +23,43 @@ public class Mesh {
     public int[][] faces;
     public Vec3[] normals;
 
+    // Empty constructor
+    public Mesh() {}
+
+    public Mesh(List<Vec3> vertices, List<int[]> faces){
+
+        this.vertices = vertices.toArray(new Vec3[vertices.size()]);
+        this.faces = faces.toArray(new int[faces.size()][]);   
+
+        this.normals = calculateNormals();
+    }
+
+    public Mesh(Vec3[] vertices, int[][] faces){
+
+        this.vertices = vertices;
+        this.faces = faces;
+
+        this.normals = calculateNormals();
+    }
+
+    public Vec3[] calculateNormals(){
+
+        normals = new Vec3[faces.length];
+
+        for (int i = 0; i < faces.length; i++) {
+            
+            Vec3 a = vertices[faces[i][0]];
+            Vec3 b = vertices[faces[i][1]];
+            Vec3 c = vertices[faces[i][2]];
+
+            Triangle triangle = new Triangle(a, b, c);
+            normals[i] = Utils.CalculateFaceNormal(triangle);
+        }
+
+        return normals;
+    }
+
+    // Load mesh from .obj file
     public static Mesh LoadFrom(String filename){
 
         try {
@@ -74,7 +111,8 @@ public class Mesh {
             mesh.faces = new int[faces.size()][];
             mesh.faces = faces.toArray(mesh.faces);
 
-            mesh.normals = new Vec3[mesh.faces.length];
+            // Issue normal calculations
+            mesh.normals = mesh.calculateNormals();
 
             return mesh;
 

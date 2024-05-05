@@ -20,6 +20,7 @@
             <artifactId>libsdl4j</artifactId>
             <version>2.28.4-1.6</version>
         </dependency>
+
     </dependencies>
 
 </project>

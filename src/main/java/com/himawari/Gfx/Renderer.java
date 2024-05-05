@@ -10,13 +10,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.himawari.Camera;
-import com.himawari.Clipping;
-import com.himawari.Mesh;
-import com.himawari.Utils;
-import com.himawari.Window;
+import com.himawari.Camera.Camera;
+import com.himawari.Camera.Clipping;
 import com.himawari.HLA.Triangle;
 import com.himawari.HLA.Vec3;
+import com.himawari.Utils.Utils;
 
 import io.github.libsdl4j.api.render.SDL_Renderer;
 import io.github.libsdl4j.api.render.SDL_Texture;
@@ -43,7 +41,7 @@ public class Renderer {
 
         // Loop through stored meshes and draw each of them
         for (Mesh mesh : renderQueue) {
-            
+
             // Before buffering the renderer
             // Treat and cache the vertices after all projection operations
             Vec3[] trianglePool = ProjectVerticesFromMesh(mesh);
@@ -55,7 +53,6 @@ public class Renderer {
         }
 
         // Render the current frame
-        
         SDL_Texture renderPixels = BackBuffer.FetchTexture(renderer);
         SDL_RenderCopy(renderer, renderPixels, null, null);
         SDL_RenderPresent(renderer);
@@ -64,6 +61,8 @@ public class Renderer {
     }
 
     // Efectuate the rotation of the points in 3D space
+    // Normals are a reference to the normals array list that is used later
+    // Normals need to be calculated from the raw vertex data
     private static Vec3[] ProjectVerticesFromMesh(Mesh mesh){
 
         Vec3[] trianglePool = new Vec3[mesh.vertices.length];
@@ -76,14 +75,14 @@ public class Renderer {
 
             // Apply rotations
             // Apply rotations
-            Projection.ProjectRotationMatricesToAngle(mesh.rotation);
+            Projection.ProjectRotationMatricesToAngle(mesh.transform.rotation);
             trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.rotationX, false);
             trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.rotationZ, false);
             trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.rotationY, false);
             
             // Apply local transformations
-            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.MakeScale(mesh.scale), false);
-            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.MakeTranslation(mesh.position), false);
+            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.MakeScale(mesh.transform.scale), false);
+            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.MakeTranslation(mesh.transform.position), false);
 
             trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.cameraView, false);
 
@@ -125,23 +124,23 @@ public class Renderer {
 
         for (int i = 0; i < faces.length; i++) {
 
+            // Visibility is dependant on normal calculations
+            // Get the current normal
+            Vec3 normal = mesh.normals[i];
+
             // 3D points that compose the trinagle face unlinked
             // Efectuate the projection
             Triangle triangle = UnlinkTriangleFaceVertices(faces[i], vertices);
             
-            // Normal calculation
-            // Visibility is dependant on normal calculations
-            Vec3 normal = Utils.CalculateFaceNormal(triangle);
-            
-            // Invisible face
+            // Backface culling
             // Skip projection and drawing
             Vec3 cameraRay = (triangle.get(0).copy().subtract(Camera.position.copy()));
-            // float visionAngleDifference = Vec3.DotProduct(normal, cameraRay);
-            // if (visionAngleDifference < 1) {
-            //     // The surface is facing away from the camera, so continue processing
-            //     // (or you may want to skip rendering depending on your needs)
-            //     continue;
-            // }
+
+            float visionAngleDifference = Vec3.DotProduct(normal, cameraRay);
+            if (visionAngleDifference < 0) {
+                // The surface is facing away from the camera, so continue processing the next face
+                //continue;
+            }
 
             // Calculate lighting conditions from normal
             Vec3 lightDirection = new Vec3(0,0,-1);

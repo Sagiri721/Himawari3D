@@ -1,4 +1,4 @@
-package com.himawari;
+package com.himawari.Camera;
 
 import com.himawari.HLA.Vec3;
 

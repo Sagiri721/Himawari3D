@@ -1,6 +1,5 @@
 package com.himawari.Gfx;
 
-import com.himawari.Utils;
 import com.himawari.HLA.Triangle;
 
 import io.github.libsdl4j.api.render.SDL_Renderer;

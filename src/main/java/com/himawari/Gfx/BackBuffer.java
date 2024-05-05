@@ -3,9 +3,9 @@ package com.himawari.Gfx;
 import static io.github.libsdl4j.api.render.SdlRender.SDL_CreateTexture;
 import static io.github.libsdl4j.api.render.SdlRender.SDL_UpdateTexture;
 
-import com.himawari.Utils;
-import com.himawari.Window;
 import com.himawari.HLA.Vec3;
+import com.himawari.Utils.Utils;
+import com.himawari.Utils.Window;
 import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
 

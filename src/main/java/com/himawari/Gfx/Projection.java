@@ -1,8 +1,8 @@
 package com.himawari.Gfx;
 
-import com.himawari.Window;
 import com.himawari.HLA.Mat4;
 import com.himawari.HLA.Vec3;
+import com.himawari.Utils.Window;
 
 public class Projection {
     
