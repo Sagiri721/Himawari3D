@@ -24,11 +24,13 @@ public class Main {
         ZBuffer.Init();
 
         // Rendering shit
-        Mesh cube = Mesh.LoadFrom("models/mountains.obj");
+        Mesh cube = Mesh.LoadFrom("models/teapot.obj");
+        cube.base = Color.BLUE;
+
+        Mesh rotationTest = Primitives.Cube();
+        rotationTest.transform.scale = new Vec3(2f, 2f, 2);
 
         //Gizmos.DrawNormals(cube);
-        //Mesh rotationTest = Primitives.Cube();
-        //rotationTest.transform.scale = new Vec3(0.1f, 2f, 2);
 
         Renderer.renderQueue.add(cube);
         //Renderer.renderQueue.add(rotationTest);

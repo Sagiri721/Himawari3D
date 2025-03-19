@@ -14,7 +14,9 @@ import com.himawari.Camera.Camera;
 import com.himawari.Camera.Clipping;
 import com.himawari.HLA.Triangle;
 import com.himawari.HLA.Vec3;
+import com.himawari.Recording.Recorder;
 import com.himawari.Utils.Utils;
+import com.himawari.Utils.Window;
 
 import io.github.libsdl4j.api.render.SDL_Renderer;
 import io.github.libsdl4j.api.render.SDL_Texture;
@@ -23,6 +25,7 @@ public class Renderer {
 
     // List of meshes to display
     public static List<Mesh> renderQueue = new ArrayList<Mesh>();
+    public static RenderMode renderMode = RenderMode.SOLID;
 
     public static void Render(SDL_Renderer renderer){
 
@@ -57,6 +60,9 @@ public class Renderer {
         SDL_RenderCopy(renderer, renderPixels, null, null);
         SDL_RenderPresent(renderer);
 
+        // Save the frane to a file
+        //Recorder.saveFrame("f" + Window.ticks + ".bmp", renderPixels, renderer);
+
         SDL_DestroyTexture(renderPixels);
     }
 
@@ -75,7 +81,7 @@ public class Renderer {
 
             // Apply rotations
             // Apply rotations
-            Projection.ProjectRotationMatricesToAngle(mesh.transform.rotation);
+            Projection.ProjectRotationMatricesToAngle(mesh.transform.getRotation());
             trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.rotationX, false);
             trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.rotationZ, false);
             trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.rotationY, false);
@@ -123,30 +129,32 @@ public class Renderer {
     private static void BufferFaceTriangles(int[][] faces, Vec3[] vertices, Mesh mesh, SDL_Renderer renderer){
 
         for (int i = 0; i < faces.length; i++) {
-
-            // Visibility is dependant on normal calculations
-            // Get the current normal
-            Vec3 normal = mesh.normals[i];
-
+            
             // 3D points that compose the trinagle face unlinked
             // Efectuate the projection
             Triangle triangle = UnlinkTriangleFaceVertices(faces[i], vertices);
+
+            // Visibility is dependant on normal calculations
+            // Get this face's current normal
+            Vec3 normal = Utils.CalculateFaceNormal(triangle);
             
             // Backface culling
             // Skip projection and drawing
             Vec3 cameraRay = (triangle.get(0).copy().subtract(Camera.position.copy()));
 
             float visionAngleDifference = Vec3.DotProduct(normal, cameraRay);
-            if (visionAngleDifference < 0) {
+            if (visionAngleDifference >= 0) {
                 // The surface is facing away from the camera, so continue processing the next face
-                //continue;
+                continue;
             }
 
             // Calculate lighting conditions from normal
             Vec3 lightDirection = new Vec3(0,0,-1);
             float lightProduct = Vec3.DotProduct(normal, lightDirection);
 
-            Color lightShade = Color.getLuminanceVariation(mesh.base, lightProduct);
+            Color lightShade = (mesh.lit && Renderer.renderMode == RenderMode.SOLID) ? 
+                Color.getLuminanceVariation(mesh.base, lightProduct) : 
+                mesh.base;
 
             // Apply triangle clipping against near plane
             Triangle[] rasterQueue = Clipping.ClipTriangleToFace(triangle, new Vec3(0,0, Projection.zNear), Vec3.FORWARD.copy());
@@ -160,7 +168,14 @@ public class Renderer {
                 for (Triangle screenSplitTriangle : Clipping.ClipTrianglesToScreen(triangleToRaster)) {
                     
                     // Buffer the face triangle
-                    Graphics.FillTriangle(renderer, screenSplitTriangle, lightShade);
+                    switch (Renderer.renderMode) {
+                        case WIREFRAME:
+                            Graphics.DrawTriangle(renderer, screenSplitTriangle, lightShade);
+                        break;
+                        case SOLID:
+                            Graphics.FillTriangle(renderer, screenSplitTriangle, lightShade);
+                            break;
+                    }
                 }
     
             }

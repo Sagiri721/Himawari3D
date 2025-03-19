@@ -35,8 +35,8 @@ public class Input {
         if (keyStates.getByte(UpOffset) != 0) Camera.position.y += moveSpeed * Window.frameDelta;
         if (keyStates.getByte(DownOffset) != 0) Camera.position.y -= moveSpeed * Window.frameDelta;
 
-        if (keyStates.getByte(RightOffset) != 0) Camera.position.x -= moveSpeed * Window.frameDelta;
-        if (keyStates.getByte(LeftOffset) != 0) Camera.position.x += moveSpeed * Window.frameDelta;
+        if (keyStates.getByte(RightOffset) != 0) Camera.position.x += moveSpeed * Window.frameDelta;
+        if (keyStates.getByte(LeftOffset) != 0) Camera.position.x -= moveSpeed * Window.frameDelta;
 
         Vec3 vforward = Camera.lookDirection.copy().scale(moveSpeed).scale((float) Window.frameDelta);
 

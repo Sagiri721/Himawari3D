@@ -13,6 +13,7 @@ import static io.github.libsdl4j.api.video.SdlVideo.SDL_CreateWindow;
 import static io.github.libsdl4j.api.video.SdlVideoConst.SDL_WINDOWPOS_CENTERED;
 
 import com.himawari.Gfx.Renderer;
+import com.himawari.HLA.Vec3;
 import com.himawari.Input.Input;
 import com.sun.jna.Pointer;
 
@@ -86,6 +87,8 @@ public class Window {
 
             Window.ticks++;
             Window.elapsedTime += Window.frameDelta;
+
+            Renderer.renderQueue.get(0).transform.Rotate(new Vec3(0.01f,0.01f, 0));
 
             Renderer.Render(renderer);
         }

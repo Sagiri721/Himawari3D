@@ -78,7 +78,7 @@ public class Utils {
 
         // Calculate new upwards direction
         Vec3 a = newForward.copy().scale(Vec3.DotProduct(up, newForward));
-        Vec3 newUp = up.copy().subtract(a).flip(1).normalized();
+        Vec3 newUp = up.copy().flip(1).subtract(a).normalized();
 
         // New right direction is the cross product of the two previous vectors
         Vec3 newRight = Vec3.CrossProduct(newUp, newForward).normalized();

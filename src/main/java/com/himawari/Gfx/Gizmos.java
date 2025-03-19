@@ -10,7 +10,7 @@ public final class Gizmos {
         cube.transform.position = origin;
         
         // Make it point to direction
-        cube.transform.rotation = direction;
+        cube.transform.setRotation(direction);
 
         // Make it narrow
         cube.transform.scale = new Vec3(0.3f, size, 0.3f);
@@ -22,17 +22,22 @@ public final class Gizmos {
 
     public static void DrawNormals(Mesh mesh){
 
-        for (int[] points : mesh.faces) {
+        for (int[] face : mesh.faces){
 
-            Vec3 a = mesh.vertices[points[0]].copy();
-            Vec3 b = mesh.vertices[points[1]].copy();
-            Vec3 c = mesh.vertices[points[2]].copy();
+            Vec3 a = mesh.vertices[face[0]];
+            Vec3 b = mesh.vertices[face[1]];
+            Vec3 c = mesh.vertices[face[2]];
 
-            Vec3 normal = Vec3.CrossProduct(b.subtract(a), c.subtract(a)).normalized();
+            Vec3 center = new Vec3((a.x + b.x + c.x) / 3, (a.y + b.y + c.y) / 3, (a.z + b.z + c.z) / 3);
 
-            Vec3 center = a.sum(c.sum(a).divide(3));
+            Mesh cube = Primitives.Cube();
+            cube.transform.position = mesh.transform.position.copy().sum(center);
+            cube.transform.scale = new Vec3(0.1f, 0.1f, 0.1f);
+            cube.base = Color.GREEN;
 
-            MakeArrow(center, normal, 1);
+            cube.lit = false;
+
+            Renderer.renderQueue.add(cube);
         }
     }
 }

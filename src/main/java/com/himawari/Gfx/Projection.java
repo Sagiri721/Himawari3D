@@ -28,7 +28,7 @@ public class Projection {
     public static Vec3 normalizingTransformationScale = new Vec3(scalingX, scalingY, 1);
 
     // Projection modifiers
-    public static float zNear = 0.1f, zFar = 1000;
+    public static float zNear = 0.2f, zFar = 1000;
     public static float fov = 90f;
 
     public static void LoadMatrixInformation(){
