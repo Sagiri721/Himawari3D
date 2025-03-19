@@ -15,4 +15,6 @@ A simple 3D renderer using SDL bindings for Java. Made from complete scratch usi
 
 ## Demo
 
-![](src/main/resources/demo.mp4)
+<video src="src/main/resources/demo.mp4" autoplay loop controls muted title="test-title">
+    Sorry, your browser doesn't support HTML 5 video.
+</video>
