@@ -2,7 +2,6 @@ package com.himawari;
 
 import com.himawari.Gfx.BackBuffer;
 import com.himawari.Gfx.Color;
-import com.himawari.Gfx.Gizmos;
 import com.himawari.Gfx.Mesh;
 import com.himawari.Gfx.Primitives;
 import com.himawari.Gfx.Projection;
@@ -34,10 +33,7 @@ public class Main {
 
         Renderer.renderQueue.add(cube);
         //Renderer.renderQueue.add(rotationTest);
-
-        // Record video
-        Renderer.recorder.startRecording();
-
+        
         Window.InitWindow("testing");
     }
 }

@@ -148,7 +148,6 @@ public class Renderer {
                 continue;
             }
 
-            
             // Calculate lighting conditions from normal
             Vec3 lightDirection = new Vec3(0,0,-1);
             float lightProduct = Vec3.DotProduct(normal, lightDirection);

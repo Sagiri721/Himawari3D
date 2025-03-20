@@ -9,6 +9,8 @@ import com.himawari.Utils.Window;
 import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 
 import io.github.libsdl4j.api.pixels.SDL_PixelFormatEnum;
@@ -20,7 +22,7 @@ public class BackBuffer {
 
     // Buffer data
     public static int bufferWidth, bufferHeight;
-    public static int[] colorBuffer;
+    public static ByteBuffer colorBuffer;
 
     // initialize the buffer with the respective window dimensions
     public static void Init(){
@@ -28,7 +30,7 @@ public class BackBuffer {
         BackBuffer.bufferWidth = Window.width;
         BackBuffer.bufferHeight = Window.height;
 
-        BackBuffer.colorBuffer = new int[bufferWidth*bufferHeight];
+        BackBuffer.colorBuffer = ByteBuffer.allocateDirect(bufferWidth * bufferHeight * 4).order(ByteOrder.nativeOrder());
 
         ClearBackBuffer();
     }
@@ -37,21 +39,40 @@ public class BackBuffer {
 
         if(x < 0 || y < 0 || x >= bufferWidth || y >= bufferHeight) return;
 
+        int position = x * 4 + y * bufferWidth * 4;
+
         // When no surface is given skip Depth buffering
-        if(v1 == null || v2 == null || v3 == null)
-            BackBuffer.colorBuffer[x + y * bufferWidth] = color.toInt();
-        else{
+        if(v1 == null || v2 == null || v3 == null){
+
+            colorBuffer.position(position);
+            byte[] colorBytes = color.toByte();
+            colorBuffer.put(colorBytes);
+
+        } else{
 
             // Calculate the pixel projection onto surface
             float depth = ZBuffer.ProjectOntoToFace(v1, v2, v3, new Vec3(x, y, 0)).z;
             boolean result = ZBuffer.TestAndSet(x, y, depth);
 
-            if(result) BackBuffer.colorBuffer[x + y * bufferWidth] = color.toInt();
+            if(result) {
+
+                colorBuffer.position(position);
+                byte[] colorBytes = color.toByte();
+                colorBuffer.put(colorBytes);
+            }
         }
     }
 
     public static void ClearBackBuffer(){
-        Arrays.fill(colorBuffer, Color.BLACK.toInt());
+        
+        colorBuffer.clear(); // Reset position to 0
+        byte[] black = Color.BLACK.toByte();
+        
+        for(int i = 0; i < bufferWidth * bufferHeight; i++) {
+            colorBuffer.put(black);
+        }
+        
+        colorBuffer.rewind(); // Reset position to 0 after filling
     }
     
     public static void FillBufferLine(float x1, float y1, float x2, float y2, Color fillValue){
@@ -143,7 +164,13 @@ public class BackBuffer {
 
         for (int i = 0; i < flatBuffer.length; i+=4) {
 
-            Color c = new Color(colorBuffer[i / 4]);
+            int index = i / 4;
+            byte[] colorBytes = new byte[4];
+
+            colorBuffer.position(index * 4);
+            colorBuffer.get(colorBytes);
+
+            Color c = new Color(colorBytes);
 
             flatBuffer[i] = c.r;
             flatBuffer[i + 1] = c.g;

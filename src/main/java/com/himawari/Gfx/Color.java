@@ -32,6 +32,22 @@ public class Color {
         this.r = (byte) ((rgba >> 24) & 0xFF);
     }
 
+    public Color(Vec4 vec4){
+
+        this.r = (byte) vec4.x;
+        this.g = (byte) vec4.y;
+        this.b = (byte) vec4.z;
+        this.a = (byte) vec4.w;
+    }
+
+    public Color(byte[] color){
+
+        this.r = color[0];
+        this.g = color[1];
+        this.b = color[2];
+        this.a = color[3];
+    }
+
     public static Color getLuminanceVariation(Color baseColor, float lum){
 
         return new Color(

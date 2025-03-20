@@ -1,5 +1,8 @@
 package com.himawari.Gfx;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
 import java.util.Arrays;
 
 import com.himawari.HLA.Vec3;
@@ -8,7 +11,7 @@ import com.himawari.Utils.Window;
 public class ZBuffer {
     
     public static int bufferWidth, bufferHeight;
-    public static float[] depthBuffer;
+    public static FloatBuffer depthBuffer;
 
     // initialize the buffer with the respective window dimensions
     public static void Init(){
@@ -16,17 +19,23 @@ public class ZBuffer {
         ZBuffer.bufferWidth = Window.width;
         ZBuffer.bufferHeight = Window.height;
 
-        ZBuffer.depthBuffer = new float[bufferWidth*bufferHeight];
+        ZBuffer.depthBuffer = ByteBuffer.allocateDirect(bufferWidth * bufferHeight * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
 
         ClearDepthBuffer();
     }
 
     // Overwrite (or not) current depth value
     public static boolean TestAndSet(int x, int y, float depth){
+        
+        if (x < 0 || y < 0 || x >= bufferWidth || y >= bufferHeight)
+            return false;
 
-        float cachedDepth = depthBuffer[x + y * bufferWidth];
+        int index = x + y * bufferWidth;
+        float cachedDepth = depthBuffer.get(index);
+
         if (depth < cachedDepth) {
-            depthBuffer[x + y * bufferWidth] = depth;
+            
+            depthBuffer.put(index, depth);
             return true;
         }
 
@@ -50,6 +59,12 @@ public class ZBuffer {
 
     // Fill the depth buffer with infinity
     public static void ClearDepthBuffer(){
-        Arrays.fill(depthBuffer, 9999);
+        
+        depthBuffer.clear();
+
+        for (int i = 0; i < bufferWidth * bufferHeight; i++)
+            depthBuffer.put(Float.MAX_VALUE);
+        
+        depthBuffer.rewind();
     }
 }
