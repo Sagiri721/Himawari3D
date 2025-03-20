@@ -8,6 +8,8 @@ import static io.github.libsdl4j.api.surface.SdlSurface.SDL_CreateRGBSurface;
 import static io.github.libsdl4j.api.surface.SdlSurface.SDL_FreeSurface;
 import static io.github.libsdl4j.api.surface.SdlSurface.SDL_SaveBMP;
 
+import java.io.File;
+
 import com.sun.jna.ptr.IntByReference;
 
 import io.github.libsdl4j.api.render.SDL_Renderer;
@@ -16,7 +18,51 @@ import io.github.libsdl4j.api.surface.SDL_Surface;
 
 public class Recorder {
     
-    public static void saveFrame(String filename, SDL_Texture texture, SDL_Renderer renderer){
+    private int framerate = 10, frameCount = 0, frameIndex = 0;
+    private boolean recording = false;
+
+    private Resolution recordResolution = Resolution.NATIVE_RES;
+
+    public Recorder(int framerate, boolean clearRecorderFolder){
+
+        recording = false;
+        this.framerate = framerate;
+
+        if(clearRecorderFolder){
+            
+            File folder = new File("outputs");
+
+            if (!folder.exists()) 
+                folder.mkdir();
+
+            File[] files = folder.listFiles();
+            for(File file : files)
+                file.delete();
+        }
+
+    }
+
+    public void startRecording() {
+        recording = true;
+    }
+
+    public void stopRecording() {
+        recording = false;
+    }
+
+    public void tickRecording(SDL_Texture texture, SDL_Renderer renderer){
+        
+        if(recording && frameCount > framerate){
+            
+            saveFrame("f" + frameIndex + ".bmp", texture, renderer);
+            frameCount = 0;
+            frameIndex++;
+        }
+
+        frameCount++;
+    }
+
+    private void saveFrame(String filename, SDL_Texture texture, SDL_Renderer renderer){
         
         // Get the current render target to redirect drawing to an image and then restore it
         SDL_Texture target = SDL_GetRenderTarget(renderer);

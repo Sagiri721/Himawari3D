@@ -35,6 +35,9 @@ public class Main {
         Renderer.renderQueue.add(cube);
         //Renderer.renderQueue.add(rotationTest);
 
+        // Record video
+        Renderer.recorder.startRecording();
+
         Window.InitWindow("testing");
     }
 }

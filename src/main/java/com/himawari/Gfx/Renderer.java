@@ -16,13 +16,15 @@ import com.himawari.HLA.Triangle;
 import com.himawari.HLA.Vec3;
 import com.himawari.Recording.Recorder;
 import com.himawari.Utils.Utils;
-import com.himawari.Utils.Window;
 
 import io.github.libsdl4j.api.render.SDL_Renderer;
 import io.github.libsdl4j.api.log.SdlLog;
 import io.github.libsdl4j.api.render.SDL_Texture;
 
 public class Renderer {
+
+    // Recorder for the current frame
+    public static Recorder recorder = new Recorder(1, true);
 
     // List of meshes to display
     public static List<Mesh> renderQueue = new ArrayList<Mesh>();
@@ -62,7 +64,7 @@ public class Renderer {
         SDL_RenderPresent(renderer);
 
         // Save the frane to a file
-        //Recorder.saveFrame("f" + Window.ticks + ".bmp", renderPixels, renderer);
+        recorder.tickRecording(renderPixels, renderer);
 
         SDL_DestroyTexture(renderPixels);
     }
@@ -142,7 +144,7 @@ public class Renderer {
             // Backface culling
             // Skip projection and drawing  
             Vec3 cameraRay = (triangle.get(0).copy().sum(Camera.lookDirection.copy()));
-            float visionAngleDifference = Vec3.getAngle(normal, cameraRay) * (180/(float)Math.PI);
+            float visionAngleDifference = Vec3.getAngle(normal, cameraRay) * (180/(float) Math.PI);
             if (visionAngleDifference <= 90) {
                 // The surface is facing away from the camera, so continue processing the next faces
                 continue;
