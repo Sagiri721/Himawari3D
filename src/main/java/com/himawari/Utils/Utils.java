@@ -187,4 +187,16 @@ public class Utils {
 
         return 0;
     }
+
+    public static float EulerToRadians(float degrees){
+        return degrees * (float) Math.PI / 180;
+    }
+
+    public static float RadiansToEuler(float radians){
+        return radians * 180 / (float) Math.PI;
+    }
+
+    public static int clamp(int g, int lim0, int lim1) {
+        return Math.max(lim0, Math.min(g, lim1));
+    }
 }

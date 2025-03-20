@@ -1,6 +1,7 @@
 package com.himawari.Gfx;
 
 import com.himawari.HLA.Vec4;
+import com.himawari.Utils.Utils;
 
 public class Color {
     
@@ -13,48 +14,62 @@ public class Color {
     public static final Color BLUE = new Color(0,0,255,255);
 
     // Color rgb data
-    public Vec4 colorData = new Vec4();
+    public byte r, g, b, a;
     
     public Color(int r, int g, int b, int a){
 
-        colorData.x = r;
-        colorData.y = g;
-        colorData.z = b;
-        colorData.w = a;
+        this.r = (byte) r;
+        this.g = (byte) g;
+        this.b = (byte) b;
+        this.a = (byte) a;
+    }
+
+    public Color(int rgba){
+
+        this.a = (byte) (rgba & 0xFF);
+        this.b = (byte) ((rgba >> 8) & 0xFF);
+        this.g = (byte) ((rgba >> 16) & 0xFF);
+        this.r = (byte) ((rgba >> 24) & 0xFF);
     }
 
     public static Color getLuminanceVariation(Color baseColor, float lum){
 
         return new Color(
-            (int)(lum*baseColor.colorData.x),
-            (int)(lum*baseColor.colorData.y),
-            (int)(lum*baseColor.colorData.z),
-            (int) baseColor.colorData.w
+            (int)(lum * (baseColor.r & 0xFF)),
+            (int)(lum * (baseColor.g & 0xFF)),
+            (int)(lum * (baseColor.b & 0xFF)),
+            (int)(baseColor.a & 0xFF)
         ).clampColor(30, 225);
     }
 
     public Color copy(){
 
         return new Color(
-            (int) colorData.x, 
-            (int) colorData.y, 
-            (int) colorData.z, 
-            (int) colorData.w
+            r & 0xFF,
+            g & 0xFF,
+            b & 0xFF,
+            a & 0xFF
         );
     }
 
-    public Color clampColor(int lim0, int lim1){
-
-        colorData.clamp(lim0, lim1);
+    public Color clampColor(int lim0, int lim1) {
+        r = (byte) Utils.clamp(r & 0xFF, lim0, lim1);
+        g = (byte) Utils.clamp(g & 0xFF, lim0, lim1);
+        b = (byte) Utils.clamp(b & 0xFF, lim0, lim1);
+        a = (byte) Utils.clamp(a & 0xFF, lim0, lim1);
         return this;
     }
 
-    public byte[] toByte(){
-        return colorData.forEach();
+    public byte[] toByte(){    
+        return new byte[]{r, g, b, a};
+    }
+    
+    public int toInt() {
+        return ((r & 0xFF) << 24) | ((g & 0xFF) << 16) | ((b & 0xFF) << 8) | (a & 0xFF);
     }
 
     @Override
     public String toString() {
-        return "(r: "+colorData.x+", g:"+colorData.y+", b:"+colorData.z+", a:"+colorData.w+")";
+        return "Color [a=" + a + ", b=" + b + ", g=" + g + ", r=" + r + "]";
     }
 }

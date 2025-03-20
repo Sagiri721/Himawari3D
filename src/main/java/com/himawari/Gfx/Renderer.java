@@ -7,7 +7,6 @@ import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderPresent;
 import static io.github.libsdl4j.api.render.SdlRender.SDL_SetRenderDrawColor;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import com.himawari.Camera.Camera;
@@ -18,7 +17,6 @@ import com.himawari.Recording.Recorder;
 import com.himawari.Utils.Utils;
 
 import io.github.libsdl4j.api.render.SDL_Renderer;
-import io.github.libsdl4j.api.log.SdlLog;
 import io.github.libsdl4j.api.render.SDL_Texture;
 
 public class Renderer {
@@ -28,7 +26,7 @@ public class Renderer {
 
     // List of meshes to display
     public static List<Mesh> renderQueue = new ArrayList<Mesh>();
-    public static RenderMode renderMode = RenderMode.WIREFRAME;
+    public static RenderMode renderMode = RenderMode.SOLID;
 
     public static void Render(SDL_Renderer renderer){
 
@@ -144,12 +142,13 @@ public class Renderer {
             // Backface culling
             // Skip projection and drawing  
             Vec3 cameraRay = (triangle.get(0).copy().sum(Camera.lookDirection.copy()));
-            float visionAngleDifference = Vec3.getAngle(normal, cameraRay) * (180/(float) Math.PI);
+            float visionAngleDifference = Utils.RadiansToEuler(Vec3.getAngle(normal, cameraRay));
             if (visionAngleDifference <= 90) {
                 // The surface is facing away from the camera, so continue processing the next faces
                 continue;
             }
 
+            
             // Calculate lighting conditions from normal
             Vec3 lightDirection = new Vec3(0,0,-1);
             float lightProduct = Vec3.DotProduct(normal, lightDirection);

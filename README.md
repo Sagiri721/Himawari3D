@@ -12,6 +12,7 @@ A simple 3D renderer using SDL bindings for Java. Made from complete scratch usi
 - Camera rotation
 - Frame by frame recording
 - Z buffering
+- Backface culling
 
 ## Demo
 

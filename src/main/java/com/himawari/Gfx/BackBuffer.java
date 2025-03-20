@@ -20,7 +20,7 @@ public class BackBuffer {
 
     // Buffer data
     public static int bufferWidth, bufferHeight;
-    public static Color[] colorBuffer;
+    public static int[] colorBuffer;
 
     // initialize the buffer with the respective window dimensions
     public static void Init(){
@@ -28,7 +28,7 @@ public class BackBuffer {
         BackBuffer.bufferWidth = Window.width;
         BackBuffer.bufferHeight = Window.height;
 
-        BackBuffer.colorBuffer = new Color[bufferWidth*bufferHeight];
+        BackBuffer.colorBuffer = new int[bufferWidth*bufferHeight];
 
         ClearBackBuffer();
     }
@@ -39,19 +39,19 @@ public class BackBuffer {
 
         // When no surface is given skip Depth buffering
         if(v1 == null || v2 == null || v3 == null)
-            BackBuffer.colorBuffer[x + y * bufferWidth] = color;
+            BackBuffer.colorBuffer[x + y * bufferWidth] = color.toInt();
         else{
 
             // Calculate the pixel projection onto surface
             float depth = ZBuffer.ProjectOntoToFace(v1, v2, v3, new Vec3(x, y, 0)).z;
             boolean result = ZBuffer.TestAndSet(x, y, depth);
 
-            if(result) BackBuffer.colorBuffer[x + y * bufferWidth] = color;
+            if(result) BackBuffer.colorBuffer[x + y * bufferWidth] = color.toInt();
         }
     }
 
     public static void ClearBackBuffer(){
-        Arrays.fill(colorBuffer, Color.BLACK);
+        Arrays.fill(colorBuffer, Color.BLACK.toInt());
     }
     
     public static void FillBufferLine(float x1, float y1, float x2, float y2, Color fillValue){
@@ -142,10 +142,13 @@ public class BackBuffer {
         byte[] flatBuffer = new byte[bufferWidth * bufferHeight * 4];
 
         for (int i = 0; i < flatBuffer.length; i+=4) {
-            flatBuffer[i] = (byte) colorBuffer[i / 4].colorData.x;
-            flatBuffer[i+1] = (byte) colorBuffer[i / 4].colorData.y;
-            flatBuffer[i+2] = (byte) colorBuffer[i / 4].colorData.z;
-            flatBuffer[i+3] = (byte) colorBuffer[i / 4].colorData.w;
+
+            Color c = new Color(colorBuffer[i / 4]);
+
+            flatBuffer[i] = c.r;
+            flatBuffer[i + 1] = c.g;
+            flatBuffer[i + 2] = c.b;
+            flatBuffer[i + 3] = c.a;
         }
 
         return flatBuffer;

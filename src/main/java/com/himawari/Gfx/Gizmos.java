@@ -6,7 +6,7 @@ import com.himawari.HLA.Vec3;
 
 public final class Gizmos {
     
-    public static void MakeArrow(Vec3 origin, Vec3 direction, float size){
+    public static Mesh MakeArrow(Vec3 origin, Vec3 direction, float size){
 
         Mesh cube = Primitives.Cube();
         cube.transform.position = origin;
@@ -19,7 +19,7 @@ public final class Gizmos {
 
         cube.base = Color.RED;
 
-        Renderer.renderQueue.add(cube);
+        return cube;
     }
 
     public static void DrawNormals(Mesh mesh){
@@ -35,7 +35,6 @@ public final class Gizmos {
             Mesh cube = Primitives.Cube();
             cube.transform.position = mesh.transform.position.copy().sum(center);
             cube.transform.scale = new Vec3(0.05f, 0.05f, 0.05f);
-            cube.transform.setRotation(Utils.CalculateFaceNormal(new Triangle(a,b,c)));
             cube.base = Color.WHITE;
 
             cube.lit = false;
