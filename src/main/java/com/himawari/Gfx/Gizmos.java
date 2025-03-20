@@ -1,5 +1,7 @@
 package com.himawari.Gfx;
 
+import com.himawari.Utils.*;
+import com.himawari.HLA.Triangle;
 import com.himawari.HLA.Vec3;
 
 public final class Gizmos {
@@ -32,8 +34,9 @@ public final class Gizmos {
 
             Mesh cube = Primitives.Cube();
             cube.transform.position = mesh.transform.position.copy().sum(center);
-            cube.transform.scale = new Vec3(0.1f, 0.1f, 0.1f);
-            cube.base = Color.GREEN;
+            cube.transform.scale = new Vec3(0.05f, 0.05f, 0.05f);
+            cube.transform.setRotation(Utils.CalculateFaceNormal(new Triangle(a,b,c)));
+            cube.base = Color.WHITE;
 
             cube.lit = false;
 
