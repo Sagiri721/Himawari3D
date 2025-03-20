@@ -54,8 +54,8 @@ public class Clipping {
             while (nNewTriangles > 0) {
 
                 // Take triangle from front of the queue
-                Triangle testing = triangleSplits.getFirst();
-                triangleSplits.removeFirst();
+                Triangle testing = triangleSplits.get(0);
+                triangleSplits.remove(0);
                 nNewTriangles--;
 
                 clippingOutput[0] = new Triangle();

@@ -157,4 +157,9 @@ public class Vec3 implements Comparable<Vec3> {
         
         return (int) Math.signum(magnitude() - o.magnitude());
     }
+
+    public static float getAngle(Vec3 from, Vec3 to){
+
+        return (float) Math.acos(DotProduct(from, to) / (from.magnitude() * to.magnitude()));
+    }
 }

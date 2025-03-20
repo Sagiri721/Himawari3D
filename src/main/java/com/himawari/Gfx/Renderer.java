@@ -19,13 +19,14 @@ import com.himawari.Utils.Utils;
 import com.himawari.Utils.Window;
 
 import io.github.libsdl4j.api.render.SDL_Renderer;
+import io.github.libsdl4j.api.log.SdlLog;
 import io.github.libsdl4j.api.render.SDL_Texture;
 
 public class Renderer {
 
     // List of meshes to display
     public static List<Mesh> renderQueue = new ArrayList<Mesh>();
-    public static RenderMode renderMode = RenderMode.SOLID;
+    public static RenderMode renderMode = RenderMode.WIREFRAME;
 
     public static void Render(SDL_Renderer renderer){
 
@@ -139,12 +140,11 @@ public class Renderer {
             Vec3 normal = Utils.CalculateFaceNormal(triangle);
             
             // Backface culling
-            // Skip projection and drawing
-            Vec3 cameraRay = (triangle.get(0).copy().subtract(Camera.position.copy()));
-
-            float visionAngleDifference = Vec3.DotProduct(normal, cameraRay);
-            if (visionAngleDifference >= 0) {
-                // The surface is facing away from the camera, so continue processing the next face
+            // Skip projection and drawing  
+            Vec3 cameraRay = (triangle.get(0).copy().sum(Camera.lookDirection.copy()));
+            float visionAngleDifference = Vec3.getAngle(normal, cameraRay) * (180/(float)Math.PI);
+            if (visionAngleDifference <= 90) {
+                // The surface is facing away from the camera, so continue processing the next faces
                 continue;
             }
 
