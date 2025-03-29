@@ -23,7 +23,7 @@ public class Main {
         ZBuffer.Init();
 
         // Rendering shit
-        Mesh cube = Mesh.LoadFrom("models/teapot.obj");
+        Mesh cube = Mesh.LoadFrom("models/mountains.obj");
         cube.base = Color.BLUE;
 
         Mesh rotationTest = Primitives.Cube();

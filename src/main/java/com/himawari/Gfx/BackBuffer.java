@@ -162,20 +162,40 @@ public class BackBuffer {
 
         byte[] flatBuffer = new byte[bufferWidth * bufferHeight * 4];
 
-        for (int i = 0; i < flatBuffer.length; i+=4) {
-
-            int index = i / 4;
-            byte[] colorBytes = new byte[4];
-
-            colorBuffer.position(index * 4);
-            colorBuffer.get(colorBytes);
-
-            Color c = new Color(colorBytes);
-
-            flatBuffer[i] = c.r;
-            flatBuffer[i + 1] = c.g;
-            flatBuffer[i + 2] = c.b;
-            flatBuffer[i + 3] = c.a;
+        if (Renderer.renderTarget == RenderTarget.COLORBUFFER) {        
+    
+            for (int i = 0; i < flatBuffer.length; i+=4) {
+    
+                int index = i / 4;
+                byte[] colorBytes = new byte[4];
+    
+                colorBuffer.position(index * 4);
+                colorBuffer.get(colorBytes);
+    
+                Color c = new Color(colorBytes);
+    
+                flatBuffer[i] = c.r;
+                flatBuffer[i + 1] = c.g;
+                flatBuffer[i + 2] = c.b;
+                flatBuffer[i + 3] = c.a;
+            }
+        } else if (Renderer.renderTarget == RenderTarget.ZBUFFER) {
+    
+            for (int i = 0; i < flatBuffer.length; i+=4) {
+    
+                int index = i / 4;
+                //byte[] colorBytes = new byte[4];
+                float value = ZBuffer.depthBuffer.get(index);
+    
+                Color c = new Color((int)value, (int)value, (int)value, 255);
+    
+                flatBuffer[i] = c.r;
+                flatBuffer[i + 1] = c.g;
+                flatBuffer[i + 2] = c.b;
+                flatBuffer[i + 3] = c.a;
+            }
+    
+            return flatBuffer;
         }
 
         return flatBuffer;

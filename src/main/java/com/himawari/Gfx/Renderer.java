@@ -27,6 +27,7 @@ public class Renderer {
     // List of meshes to display
     public static List<Mesh> renderQueue = new ArrayList<Mesh>();
     public static RenderMode renderMode = RenderMode.SOLID;
+    public static RenderTarget renderTarget = RenderTarget.COLORBUFFER;
 
     public static void Render(SDL_Renderer renderer){
 
@@ -52,8 +53,7 @@ public class Renderer {
 
             // Buffer rendering
             // For each face of the mesh draw it's triangles
-            int[][] faces = mesh.faces;
-            BufferFaceTriangles(faces, trianglePool, mesh, renderer);
+            BufferFaceTriangles(trianglePool, mesh, renderer);
         }
 
         // Render the current frame
@@ -65,6 +65,8 @@ public class Renderer {
         recorder.tickRecording(renderPixels, renderer);
 
         SDL_DestroyTexture(renderPixels);
+
+        ZBuffer.SwapDepthBuffers();
     }
 
     // Efectuate the rotation of the points in 3D space
@@ -127,37 +129,52 @@ public class Renderer {
     }
 
     // Unlink the faces and buffer the rendering of the faces
-    private static void BufferFaceTriangles(int[][] faces, Vec3[] vertices, Mesh mesh, SDL_Renderer renderer){
+    private static void BufferFaceTriangles(Vec3[] vertices, Mesh mesh, SDL_Renderer renderer){
 
+        int[][] faces = mesh.faces;
         for (int i = 0; i < faces.length; i++) {
             
             // 3D points that compose the trinagle face unlinked
             // Efectuate the projection
-            Triangle triangle = UnlinkTriangleFaceVertices(faces[i], vertices);
+            Triangle projTri = UnlinkTriangleFaceVertices(faces[i], vertices);
 
             // Visibility is dependant on normal calculations
             // Get this face's current normal
-            Vec3 normal = Utils.CalculateFaceNormal(triangle);
+            Vec3 realNormal = mesh.normals[i];
+            Vec3 projNormal = Utils.CalculateFaceNormal(projTri);
             
             // Backface culling
             // Skip projection and drawing  
-            Vec3 cameraRay = (triangle.get(0).copy().sum(Camera.lookDirection.copy()));
-            float visionAngleDifference = Utils.RadiansToEuler(Vec3.getAngle(normal, cameraRay));
+            Vec3 cameraRay = (projTri.get(0).copy().sum(Camera.lookDirection.copy()));
+            float visionAngleDifference = Utils.RadiansToEuler(Vec3.getAngle(projNormal, cameraRay));
             if (visionAngleDifference <= 90) {
                 // The surface is facing away from the camera, so continue processing the next faces
                 continue;
             }
 
             // Calculate lighting conditions from normal
-            Vec3 lightDirection = new Vec3(0,0,-1);
-            float lightProduct = Vec3.DotProduct(normal, lightDirection);
+            Vec3 lightDirection = new Vec3(0, 0, -1).normalized(); 
+            float lightProduct = Vec3.DotProduct(projNormal, lightDirection);
+            lightProduct = Math.max(0, lightProduct); 
 
-            Color lightShade = (mesh.lit && Renderer.renderMode == RenderMode.SOLID) ? 
+            Color lightShade;
+
+            if (renderTarget == RenderTarget.NORMALMAP) {
+                // Map normal to color
+                lightShade = new Color(
+                    (int) Math.abs(realNormal.x * 255),
+                    (int) Math.abs(realNormal.y * 255),
+                    (int) Math.abs(realNormal.z * 255),
+                    255
+                );
+            }else {    
+                lightShade = (mesh.lit && Renderer.renderMode == RenderMode.SOLID) ? 
                 Color.getLuminanceVariation(mesh.base, lightProduct) : 
                 mesh.base;
+            }
 
             // Apply triangle clipping against near plane
-            Triangle[] rasterQueue = Clipping.ClipTriangleToFace(triangle, new Vec3(0,0, Projection.zNear), Vec3.FORWARD.copy());
+            Triangle[] rasterQueue = Clipping.ClipTriangleToFace(projTri, new Vec3(0,0, Projection.zNear), Vec3.FORWARD.copy());
 
             for (Triangle triangleToRaster : rasterQueue) {
                 
@@ -184,7 +201,6 @@ public class Renderer {
 
     // From the face vertex links, turn them to the cached vertex triangles
     private static Triangle UnlinkTriangleFaceVertices(int[] linkedface, Vec3[] vertices){
-
         return new Triangle(vertices[(int) linkedface[0]], vertices[(int) linkedface[1]], vertices[(int) linkedface[2]]);
     }
 }

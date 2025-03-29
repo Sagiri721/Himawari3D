@@ -88,7 +88,7 @@ public class Window {
             Window.ticks++;
             Window.elapsedTime += Window.frameDelta;
 
-            Renderer.renderQueue.get(0).transform.Rotate(new Vec3(0.01f,0.01f, 0));
+            //Renderer.renderQueue.get(0).transform.Rotate(new Vec3(0.01f,0.01f, 0));
 
             Renderer.Render(renderer);
         }

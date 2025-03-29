@@ -5,13 +5,14 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.Arrays;
 
+import com.himawari.HLA.Triangle;
 import com.himawari.HLA.Vec3;
 import com.himawari.Utils.Window;
 
 public class ZBuffer {
     
     public static int bufferWidth, bufferHeight;
-    public static FloatBuffer depthBuffer;
+    public static FloatBuffer depthBuffer, referenceBuffer;
 
     // initialize the buffer with the respective window dimensions
     public static void Init(){
@@ -20,8 +21,10 @@ public class ZBuffer {
         ZBuffer.bufferHeight = Window.height;
 
         ZBuffer.depthBuffer = ByteBuffer.allocateDirect(bufferWidth * bufferHeight * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+        ZBuffer.referenceBuffer = ByteBuffer.allocateDirect(bufferWidth * bufferHeight * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
 
         ClearDepthBuffer();
+        SwapDepthBuffers();
     }
 
     // Overwrite (or not) current depth value
@@ -40,6 +43,18 @@ public class ZBuffer {
         }
 
         return false;
+    }
+
+    public static boolean TestAgainstReference(int x, int y, float depth) {
+        if (x < 0 || y < 0 || x >= bufferWidth || y >= bufferHeight)
+            return false;
+        
+        // Add a small bias to avoid z-fighting and other artifacts
+        float depthBias = 0.01f; 
+        int index = x + y * bufferWidth;
+        float cachedDepth = referenceBuffer.get(index);
+        
+        return (depth - depthBias) < cachedDepth;
     }
 
     // Given a 3D plane, correctly project the point to the matching Z axis
@@ -66,5 +81,14 @@ public class ZBuffer {
             depthBuffer.put(Float.MAX_VALUE);
         
         depthBuffer.rewind();
+    }
+
+    public static void SwapDepthBuffers() {
+        
+        depthBuffer.rewind();
+        referenceBuffer.rewind();
+        referenceBuffer.put(depthBuffer);
+        depthBuffer.rewind();
+        referenceBuffer.rewind();
     }
 }

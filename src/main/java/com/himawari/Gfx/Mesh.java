@@ -15,7 +15,7 @@ public class Mesh {
     public static final String VERTEX_CUE = "v";
     public static final String FACE_CUE = "f";
 
-    public Transform transform = new Transform(this);
+    public Transform transform = new Transform();
 
     public Color base = Color.WHITE;
     public boolean lit = true;
