@@ -69,9 +69,9 @@ public class Clipping {
 
                 switch (j) {
                     case 0: nTrianglesToAdd = Utils.ClipTriangleAgainstPlane(Vec3.ZERO.copy(), Vec3.UP.copy(), testing, clippingOutput[0], clippingOutput[1]); break;
-                    case 1: nTrianglesToAdd = Utils.ClipTriangleAgainstPlane(new Vec3(0, Window.getInstance().height - 1, 0), Vec3.DOWN.copy(), testing, clippingOutput[0], clippingOutput[1]); break;
+                    case 1: nTrianglesToAdd = Utils.ClipTriangleAgainstPlane(new Vec3(0, Window.getInstance().config().height - 1, 0), Vec3.DOWN.copy(), testing, clippingOutput[0], clippingOutput[1]); break;
                     case 2: nTrianglesToAdd = Utils.ClipTriangleAgainstPlane(Vec3.ZERO, Vec3.RIGHT.copy(), testing, clippingOutput[0], clippingOutput[1]); break;
-                    case 3: nTrianglesToAdd = Utils.ClipTriangleAgainstPlane(new Vec3(Window.getInstance().width - 1, 0, 0), Vec3.LEFT.copy(), testing, clippingOutput[0], clippingOutput[1]); break;
+                    case 3: nTrianglesToAdd = Utils.ClipTriangleAgainstPlane(new Vec3(Window.getInstance().config().width - 1, 0, 0), Vec3.LEFT.copy(), testing, clippingOutput[0], clippingOutput[1]); break;
                 }
 
                 // After clipping, a variable number of triangles is  yielded

@@ -6,6 +6,7 @@ import com.himawari.Gfx.Primitives;
 import com.himawari.Gfx.Renderer;
 import com.himawari.HLA.Vec3;
 import com.himawari.Utils.Window;
+import com.himawari.Utils.WindowConfig;
 
 public class Main {
     
@@ -27,6 +28,6 @@ public class Main {
         Renderer.renderQueue.add(cube);
         //Renderer.renderQueue.add(rotationTest);
 
-        new Window(768, 768, "testing lwjgl");
+        new Window(new WindowConfig());
     }
 }

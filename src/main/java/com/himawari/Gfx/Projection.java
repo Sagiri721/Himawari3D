@@ -36,8 +36,8 @@ public class Projection {
 
     public static void LoadMatrixInformation(){
 
-        float scalingX  = 0.5f * Window.getInstance().width;
-        float scalingY = 0.5f * Window.getInstance().height;
+        float scalingX  = 0.5f * Window.getInstance().config().width;
+        float scalingY = 0.5f * Window.getInstance().config().height;
 
         Projection.normalizingTransformationPosition = new Vec3(Projection.scaleOffseting, Projection.scaleOffseting, 0);
         Projection.normalizingTransformationScale = new Vec3(scalingX, scalingY, 1);

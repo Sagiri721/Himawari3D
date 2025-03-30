@@ -44,39 +44,35 @@ public class Text {
     // The text texture to render
     public int id;
 
-    final String text;
-    Font font;
+    private String text;
+    private Font font;
 
-    // The font style, type and size
-    String style;
-    int type, size;
+    private LabelSettings settings = new LabelSettings();
 
     // The image dimensions for the text
-    Vec2 imageDimensions = new Vec2();
+    public Vec2 imageDimensions = new Vec2();
 
     public Text(String text) {
 
         this.text = text;
-
-        style = Font.MONOSPACED;
-        type = Font.PLAIN;
-        size = 12;
-
-        font = new Font(style, type, size);
+        font = new Font(settings.style, settings.type, settings.size);
 
         UpdateImageDimensions();
     }
 
-    public Text(String text, String style, int type, int size) {
+    public Text(String text, LabelSettings set) {
 
         this.text = text;
 
-        this.style = style;
-        this.type = type;
-        this.size = size;
+        settings = set;
+        font = new Font(settings.style, settings.type, settings.size);
 
-        font = new Font(style, type, size);
+        UpdateImageDimensions();
+    }
 
+    public void setText(String text) {
+
+        this.text = text;
         UpdateImageDimensions();
     }
 
@@ -100,8 +96,15 @@ public class Text {
     private void MakeImage() {
 
         // Create ARGB image with white text on transparent BG
-        BufferedImage texture = new BufferedImage((int)imageDimensions.x, (int)imageDimensions.y, BufferedImage.TYPE_INT_ARGB);    
+        BufferedImage texture = new BufferedImage((int)imageDimensions.x, (int)imageDimensions.y, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = texture.createGraphics();
+
+        // Set rendering hints
+        if (settings.useAntiAliasing) {
+            
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        }
 
         // Draw text
         g.setFont(font);
@@ -114,7 +117,6 @@ public class Text {
     }
 
     public void Render(Vec2 position, Color color) {
-
         Graphics.RenderTexture(id, position.x, position.y, imageDimensions.x, imageDimensions.y, Optional.of(color));
     }
 }

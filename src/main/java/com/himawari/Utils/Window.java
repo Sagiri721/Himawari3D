@@ -9,6 +9,7 @@ import com.himawari.Gfx.Graphics;
 import com.himawari.Gfx.Projection;
 import com.himawari.Gfx.Renderer;
 import com.himawari.Gfx.Text;
+import com.himawari.Gfx.LabelSettings;
 import com.himawari.HLA.Vec2;
 import com.himawari.Input.Input;
 
@@ -17,8 +18,8 @@ import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
+import java.awt.Font;
 import java.awt.image.BufferedImage;
-import java.nio.ByteBuffer;
 
 public class Window implements AutoCloseable {
 
@@ -31,22 +32,22 @@ public class Window implements AutoCloseable {
     // Window handle
     private long window;
 
-    // Window size
-    public int width = 0, height = 0;
+    // Window ar
     public float aspectRatio;
 
     // Tick tracking
     public long ticks, lastFrame, elapsedTime;
     public double fps, frameDelta;
 
-    public Window(int width, int height, String name){
+    private final WindowConfig config;
+
+    public Window(WindowConfig config) {
 
         if (instance != null) throw new IllegalStateException("Window already created");
         instance = this;
 
-        this.width = width;
-        this.height = height;
-        this.aspectRatio = (float)width / (float)height;
+        this.config = config;
+        this.aspectRatio = (float)config.width / (float)config.height;
 
         // Load projection information
         Projection.LoadMatrixInformation();
@@ -54,7 +55,7 @@ public class Window implements AutoCloseable {
         // Init input buffer
         Input.Init();
 
-        InitWindow(name);
+        InitWindow(config.name);
         Loop();
 
         // Clean up
@@ -86,16 +87,22 @@ public class Window implements AutoCloseable {
         // Configure GLFW window
         glfwDefaultWindowHints();
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); // the window will stay visible after creation
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE); // The window will be resizable
+        
+        if (config.resizable)
+            glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE); // The window will be resizable
 
         // Create the window
-        window = glfwCreateWindow(width, height, name, NULL, NULL);
+        window = glfwCreateWindow(config.width, config.height, name, NULL, NULL);
 
         if (window == NULL)
             throw new RuntimeException("Failed to create the GLFW window");
 
-        GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-        glfwSetWindowPos(window, (vidmode.width() - width) / 2, (vidmode.height() - height) / 2);
+        if (config.startOnCenter) {
+
+            // Get the resolution of the primary monitor
+            GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+            glfwSetWindowPos(window, (vidmode.width() - config.width) / 2, (vidmode.height() - config.height) / 2);
+        }
 
         // Setup a key callback
         // This will be called everytime a key is pressed
@@ -108,9 +115,11 @@ public class Window implements AutoCloseable {
         
         // Set up GL context
         glfwMakeContextCurrent(window);
-        glfwSwapInterval(1); // Enable v-sync
         glfwShowWindow(window);
         glfwWindowHint(GLFW_DEPTH_BITS, 24);
+
+        if (config.useVSync)
+            glfwSwapInterval(1); // Enable v-sync
 
         // Set lwjgl to interface with an OpenGL context
         // This creates the GLCapabilities instance and makes the OpenGL bindings available for use
@@ -119,7 +128,7 @@ public class Window implements AutoCloseable {
         // Project window space to normalized device coordinates
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
-        glOrtho(0, width, height, 0, -1, 1);
+        glOrtho(0, config.width, config.height, 0, -1, 1);
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
 
@@ -150,7 +159,13 @@ public class Window implements AutoCloseable {
         BufferedImage image = Utils.loadImage("debug.png");
         int textureId = Utils.createTexture(image);
 
-        Text text = new Text("Hello World", "Arial", 0, 22);
+        LabelSettings settings = new LabelSettings();
+        settings.size = 20;
+        settings.style = Font.MONOSPACED;
+        settings.type = Font.PLAIN;
+        settings.useAntiAliasing = false;
+
+        Text text = new Text("FPS: " + fps, settings);
         
         glClearColor(Renderer.clearColor.r, Renderer.clearColor.g, Renderer.clearColor.b, Renderer.clearColor.a);
 
@@ -162,7 +177,7 @@ public class Window implements AutoCloseable {
             frameDelta = (System.currentTimeMillis() - lastFrame) / 1000f;
             lastFrame = System.currentTimeMillis();
 
-            if (frameDelta > 0) fps = 1 / (frameDelta / 1000);
+            if (frameDelta > 0) fps = 1 / (frameDelta);
 
             ticks++;
             elapsedTime += frameDelta;
@@ -172,6 +187,8 @@ public class Window implements AutoCloseable {
             Renderer.Render();
 
             //Graphics.RenderTexture(textureId, 0, 0, 84, 17);
+            if (ticks % 60 == 0) 
+                text.setText("FPS: " + (int)fps);
             text.Render(new Vec2(0, 0), Color.RED);
 
             // Tick input
@@ -180,5 +197,9 @@ public class Window implements AutoCloseable {
             glfwSwapBuffers(window); 
             glfwPollEvents();
         }
+    }
+
+    public WindowConfig config() {
+        return config;
     }
 }

@@ -19,8 +19,8 @@ public class BackBuffer {
     // initialize the buffer with the respective window dimensions
     public static void Init(){
 
-        BackBuffer.bufferWidth = Window.getInstance().width;
-        BackBuffer.bufferHeight = Window.getInstance().height;
+        BackBuffer.bufferWidth = Window.getInstance().config().width;
+        BackBuffer.bufferHeight = Window.getInstance().config().height;
 
         BackBuffer.colorBuffer = ByteBuffer.allocateDirect(bufferWidth * bufferHeight * 4).order(ByteOrder.nativeOrder());
 
