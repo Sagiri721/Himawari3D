@@ -6,12 +6,16 @@ import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
 import java.nio.IntBuffer;
 
 import com.himawari.Camera.Camera;
+import com.himawari.Gfx.RenderMode;
+import com.himawari.Gfx.RenderTarget;
+import com.himawari.Gfx.Renderer;
 import com.himawari.HLA.Vec3;
 import com.himawari.Utils.Window;
 
 public class Input {
 
-    static float moveSpeed = 12f;
+    public static float moveSpeed = 12f;
+    public static boolean debugMenu = false;
 
     public static IntBuffer keyStates;
 
@@ -23,6 +27,9 @@ public class Input {
     public static final int DownOffset = 264;
     public static final int RightOffset = 262;
     public static final int LeftOffset = 263;
+    public static final int spaceOffset = 32;
+    public static final int oneOffset = 49;
+    public static final int twoOffset = 50;
 
     public static void Init() {
         keyStates = IntBuffer.allocate(512);
@@ -53,6 +60,12 @@ public class Input {
         
         if (action == GLFW_PRESS) {
             keyStates.put(key, 1);
+
+            if (key == spaceOffset) debugMenu = !debugMenu;
+
+            if (key == oneOffset) Renderer.renderMode = Renderer.renderMode == RenderMode.WIREFRAME ? RenderMode.SOLID : RenderMode.WIREFRAME;
+            if (key == twoOffset) Renderer.renderTarget = Renderer.renderTarget == RenderTarget.NORMALMAP ? RenderTarget.COLORBUFFER : RenderTarget.NORMALMAP;
+
         } else if (action == GLFW_RELEASE) {    
             keyStates.put(key, 0);
         }

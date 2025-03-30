@@ -164,6 +164,12 @@ public class Window implements AutoCloseable {
         settings.useAntiAliasing = false;
 
         Text text = new Text("FPS: " + fps, settings);
+        Text title = new Text("Himawari DEBUG", settings);
+        
+        Text instructions1 = new Text("Press '1' to toggle wireframe", settings);
+        Text instructions2 = new Text("Press '2' to view normal map", settings);
+
+        Text[] debugMenu = {title, text, instructions1, instructions2};
         
         glClearColor(Renderer.clearColor.r, Renderer.clearColor.g, Renderer.clearColor.b, Renderer.clearColor.a);
 
@@ -184,10 +190,21 @@ public class Window implements AutoCloseable {
 
             Renderer.Render();
 
-            //Graphics.RenderTexture(textureId, 0, 0, 84, 17);
-            if (ticks % 60 == 0) 
-                text.setText("FPS: " + (int)fps);
-            text.Render(new Vec2(0, 0), Color.RED);
+            // Debug menu
+            if (Input.debugMenu) {
+
+                // Show fps
+                if (ticks % 60 == 0) 
+                    text.setText("FPS: " + (int)fps);
+
+                for (int i = 0; i < debugMenu.length; i++) {
+
+                    Text t = debugMenu[i];
+
+                    // Draw text
+                    t.Render(new Vec2(5, i * 25), Color.RED);
+                }
+            }
 
             // Tick input
             Input.tick();
