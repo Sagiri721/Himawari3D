@@ -17,8 +17,8 @@ public class ZBuffer {
     // initialize the buffer with the respective window dimensions
     public static void Init(){
 
-        ZBuffer.bufferWidth = Window.width;
-        ZBuffer.bufferHeight = Window.height;
+        ZBuffer.bufferWidth = Window.getInstance().width;
+        ZBuffer.bufferHeight = Window.getInstance().height;
 
         ZBuffer.depthBuffer = ByteBuffer.allocateDirect(bufferWidth * bufferHeight * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
         ZBuffer.referenceBuffer = ByteBuffer.allocateDirect(bufferWidth * bufferHeight * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();

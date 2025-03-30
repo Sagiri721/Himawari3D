@@ -1,5 +1,11 @@
 package com.himawari.Gfx;
 
+import static org.lwjgl.opengl.GL11.GL_MODELVIEW;
+import static org.lwjgl.opengl.GL11.GL_PROJECTION;
+import static org.lwjgl.opengl.GL11.glLoadIdentity;
+import static org.lwjgl.opengl.GL11.glMatrixMode;
+import static org.lwjgl.opengl.GL11.glOrtho;
+
 import com.himawari.HLA.Mat4;
 import com.himawari.HLA.Vec3;
 import com.himawari.Utils.Window;
@@ -19,13 +25,10 @@ public class Projection {
     public static Mat4 cameraView = new Mat4(0f);
 
     // Viewport normalizing
-    private static float scaleOffseting = 1f;
-
-    private static float scalingX = 0.5f * Window.width;
-    private static float scalingY = 0.5f * Window.height;
+    public static float scaleOffseting = 1f;
     
     public static Vec3 normalizingTransformationPosition = new Vec3(scaleOffseting, scaleOffseting, 0);
-    public static Vec3 normalizingTransformationScale = new Vec3(scalingX, scalingY, 1);
+    public static Vec3 normalizingTransformationScale = new Vec3(0, 0, 1);
 
     // Projection modifiers
     public static float zNear = 0.2f, zFar = 1000;
@@ -33,9 +36,15 @@ public class Projection {
 
     public static void LoadMatrixInformation(){
 
+        float scalingX  = 0.5f * Window.getInstance().width;
+        float scalingY = 0.5f * Window.getInstance().height;
+
+        Projection.normalizingTransformationPosition = new Vec3(Projection.scaleOffseting, Projection.scaleOffseting, 0);
+        Projection.normalizingTransformationScale = new Vec3(scalingX, scalingY, 1);
+
         float fovFunction = 1f / (float) Math.tan(fov * 0.5f / 180f * Math.PI);
      
-        projectionMatrix.Set(0, 0, Window.aspectRatio * fovFunction);
+        projectionMatrix.Set(0, 0, Window.getInstance().aspectRatio * fovFunction);
         projectionMatrix.Set(1, 1, fovFunction);
         projectionMatrix.Set(2, 2, zFar / (zFar - zNear));
         projectionMatrix.Set(3, 2, -(zFar * zNear) / (zFar - zNear));

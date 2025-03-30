@@ -39,6 +39,13 @@ public class Vec3 implements Comparable<Vec3> {
         this.z = z;
     }
 
+    public Vec3(Vec2 other) {
+
+        this.x = other.x;
+        this.y = other.y;
+        this.z = 0;
+    }
+
     public static float DotProduct(Vec3 vec1, Vec3 vec2){
 
         return vec1.x * vec2.x + vec1.y * vec2.y + vec1.z * vec2.z;

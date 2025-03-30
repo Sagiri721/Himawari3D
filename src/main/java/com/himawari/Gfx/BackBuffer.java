@@ -1,8 +1,5 @@
 package com.himawari.Gfx;
 
-import static io.github.libsdl4j.api.render.SdlRender.SDL_CreateTexture;
-import static io.github.libsdl4j.api.render.SdlRender.SDL_UpdateTexture;
-
 import com.himawari.HLA.Vec3;
 import com.himawari.Utils.Utils;
 import com.himawari.Utils.Window;
@@ -13,11 +10,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 
-import io.github.libsdl4j.api.pixels.SDL_PixelFormatEnum;
-import io.github.libsdl4j.api.render.SDL_Renderer;
-import io.github.libsdl4j.api.render.SDL_Texture;
-import io.github.libsdl4j.api.render.SDL_TextureAccess;
-
 public class BackBuffer {
 
     // Buffer data
@@ -27,8 +19,8 @@ public class BackBuffer {
     // initialize the buffer with the respective window dimensions
     public static void Init(){
 
-        BackBuffer.bufferWidth = Window.width;
-        BackBuffer.bufferHeight = Window.height;
+        BackBuffer.bufferWidth = Window.getInstance().width;
+        BackBuffer.bufferHeight = Window.getInstance().height;
 
         BackBuffer.colorBuffer = ByteBuffer.allocateDirect(bufferWidth * bufferHeight * 4).order(ByteOrder.nativeOrder());
 
@@ -142,21 +134,21 @@ public class BackBuffer {
     }
 
     // Turn current backbuffer into SDL_Texture
-    public static SDL_Texture FetchTexture(SDL_Renderer renderer) {
+    // public static SDL_Texture FetchTexture(SDL_Renderer renderer) {
 
-        // Allocate the buffer of correct size
-        int bufferSize = bufferWidth * bufferHeight * 4;
-        Pointer pointer = new Memory(bufferSize);
-        pointer.write(0, FlattenBuffer(), 0, bufferSize);
+    //     // Allocate the buffer of correct size
+    //     int bufferSize = bufferWidth * bufferHeight * 4;
+    //     Pointer pointer = new Memory(bufferSize);
+    //     pointer.write(0, FlattenBuffer(), 0, bufferSize);
 
-        SDL_Texture output = SDL_CreateTexture(renderer, SDL_PixelFormatEnum.SDL_PIXELFORMAT_RGBA32, SDL_TextureAccess.SDL_TEXTUREACCESS_STREAMING, bufferWidth, bufferHeight);
-        SDL_UpdateTexture(output, null, pointer, bufferWidth * 4);
+    //     SDL_Texture output = SDL_CreateTexture(renderer, SDL_PixelFormatEnum.SDL_PIXELFORMAT_RGBA32, SDL_TextureAccess.SDL_TEXTUREACCESS_STREAMING, bufferWidth, bufferHeight);
+    //     SDL_UpdateTexture(output, null, pointer, bufferWidth * 4);
 
-        pointer.clear(bufferSize);
-        pointer = null;
+    //     pointer.clear(bufferSize);
+    //     pointer = null;
 
-        return output;
-    }
+    //     return output;
+    // }
 
     public static byte[] FlattenBuffer(){
 

@@ -1,98 +1,165 @@
 package com.himawari.Utils;
 
-import static io.github.libsdl4j.api.Sdl.SDL_Init;
-import static io.github.libsdl4j.api.Sdl.SDL_Quit;
-import static io.github.libsdl4j.api.SdlSubSystemConst.SDL_INIT_EVERYTHING;
-import static io.github.libsdl4j.api.event.SDL_EventType.*;
-import static io.github.libsdl4j.api.event.SdlEvents.SDL_PollEvent;
-import static io.github.libsdl4j.api.render.SDL_RendererFlags.SDL_RENDERER_ACCELERATED;
-import static io.github.libsdl4j.api.render.SdlRender.*;
-import static io.github.libsdl4j.api.video.SDL_WindowFlags.SDL_WINDOW_RESIZABLE;
-import static io.github.libsdl4j.api.video.SDL_WindowFlags.SDL_WINDOW_SHOWN;
-import static io.github.libsdl4j.api.video.SdlVideo.SDL_CreateWindow;
-import static io.github.libsdl4j.api.video.SdlVideoConst.SDL_WINDOWPOS_CENTERED;
+import org.lwjgl.glfw.GLFWErrorCallback;
+import org.lwjgl.glfw.GLFWVidMode;
+import org.lwjgl.opengl.GL;
 
+import com.himawari.Gfx.Projection;
 import com.himawari.Gfx.Renderer;
 import com.himawari.HLA.Vec3;
 import com.himawari.Input.Input;
 import com.sun.jna.Pointer;
 
-import io.github.libsdl4j.api.event.SDL_Event;
-import io.github.libsdl4j.api.keyboard.SdlKeyboard;
-import io.github.libsdl4j.api.render.SDL_Renderer;
-import io.github.libsdl4j.api.video.SDL_Window;
+import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
+import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.system.MemoryStack.stackPush;
+import static org.lwjgl.system.MemoryUtil.NULL;
 
-public class Window {
+public class Window implements AutoCloseable {
 
-    // Window size
-    public static int width = 0, height = 0;
-    public static float aspectRatio;
+    private static Window instance;
 
-    // Tick tracking
-    public static long ticks, lastFrame, elapsedTime;
-    public static double fps, frameDelta;
-    
-    public static void SetDimensions(int width, int height){
-        
-        Window.width = width;
-        Window.height = height;
-
-        Window.aspectRatio = ((float)height) / ((float)width);
+    public static Window getInstance(){
+        return instance;
     }
 
-    public static void InitWindow(String name){
+    // Window handle
+    private long window;
 
-        // Initialize sdl
-        SDL_Init(SDL_INIT_EVERYTHING);
-        // Create and initialize the window
-        SDL_Window window = SDL_CreateWindow(name, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+    // Window size
+    public int width = 0, height = 0;
+    public float aspectRatio;
 
-        // Create and initialize the renderer
-        SDL_Renderer renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    // Tick tracking
+    public long ticks, lastFrame, elapsedTime;
+    public double fps, frameDelta;
 
-        SDL_SetRenderDrawColor(renderer, (byte) 0, (byte) 0, (byte) 0, (byte) 0);
-        SDL_RenderClear(renderer);
-        // Render present buffer
-        SDL_RenderPresent(renderer);
+    public Window(int width, int height, String name){
 
-        Window.ticks = 0;
-        Window.fps = 0;
-        Window.frameDelta = 0;
+        if (instance != null) throw new IllegalStateException("Window already created");
+        instance = this;
 
-        Window.elapsedTime = 0;
-        Window.lastFrame = System.currentTimeMillis();
+        this.width = width;
+        this.height = height;
+        this.aspectRatio = (float)width / (float)height;
 
-        // Start an event loop
-        SDL_Event evt = new SDL_Event();
-        boolean running = true;
-        while (running){
+        // Load projection information
+        Projection.LoadMatrixInformation();
 
-            while(SDL_PollEvent(evt) != 0) {
+        // Init input buffer
+        Input.Init();
 
-                switch (evt.type) {
-                    case SDL_QUIT:
-                        running = false;
-                        break;
-                }
-            }
+        InitWindow(name);
+        Loop();
 
-            Pointer keyStates = SdlKeyboard.SDL_GetKeyboardState(null);
-            Input.KeyDown(keyStates);
+        // Clean up
+        close();
+    }
+
+    @Override
+    public void close(){
+
+        System.out.println("#### Execution finished ####");
+        System.out.println("Ticks: " + ticks);
+        System.out.println("- Cleaning window");
+
+        // Free the window callbacks and destroy the window
+        glfwFreeCallbacks(window);
+        glfwDestroyWindow(window);
+        glfwTerminate();
+        glfwSetErrorCallback(null).free();
+    }
+
+    public void InitWindow(String name){
+
+        // Setup an error callback
+        GLFWErrorCallback.createPrint(System.err).set();
+
+        if (!glfwInit())
+            throw new IllegalStateException("Unable to initialize GLFW");
+
+        // Configure GLFW window
+        glfwDefaultWindowHints();
+        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); // the window will stay visible after creation
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE); // The window will be resizable
+
+        // Create the window
+        window = glfwCreateWindow(width, height, name, NULL, NULL);
+
+        if (window == NULL)
+            throw new RuntimeException("Failed to create the GLFW window");
+
+        GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+        glfwSetWindowPos(window, (vidmode.width() - width) / 2, (vidmode.height() - height) / 2);
+
+        // Setup a key callback
+        // This will be called everytime a key is pressed
+        glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
+            if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE)
+                glfwSetWindowShouldClose(window, true);
+
+            Input.keyCallback(key, action);
+        });
+        
+        // Set up GL context
+        glfwMakeContextCurrent(window);
+        glfwSwapInterval(1); // Enable v-sync
+        glfwShowWindow(window);
+        glfwWindowHint(GLFW_DEPTH_BITS, 24);
+
+        // Set lwjgl to interface with an OpenGL context
+        // This creates the GLCapabilities instance and makes the OpenGL bindings available for use
+        GL.createCapabilities();
+
+        // Project window space to normalized device coordinates
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        glOrtho(0, width, height, 0, -1, 1);
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+
+        // Disable open gl culling
+        glDisable(GL_CULL_FACE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
+
+        // Set up OpenGL
+        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+
+        ticks = 0;
+        fps = 0;
+        frameDelta = 0;
+        elapsedTime = 0;
+        lastFrame = System.currentTimeMillis();
+    }
+
+    private void Loop() {
+        
+        glClearColor(Renderer.clearColor.r, Renderer.clearColor.g, Renderer.clearColor.b, Renderer.clearColor.a);
+
+        while (!glfwWindowShouldClose(window)) {
+
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             // Realize tick operations
-            Window.frameDelta = (System.currentTimeMillis() - Window.lastFrame) / 1000f;
-            Window.lastFrame = System.currentTimeMillis();
+            frameDelta = (System.currentTimeMillis() - lastFrame) / 1000f;
+            lastFrame = System.currentTimeMillis();
 
-            if (frameDelta > 0) Window.fps = 1 / (frameDelta / 1000);
+            if (frameDelta > 0) fps = 1 / (frameDelta / 1000);
 
-            Window.ticks++;
-            Window.elapsedTime += Window.frameDelta;
+            ticks++;
+            elapsedTime += frameDelta;
 
             //Renderer.renderQueue.get(0).transform.Rotate(new Vec3(0.01f,0.01f, 0));
 
-            Renderer.Render(renderer);
-        }
+            Renderer.Render();
 
-        SDL_Quit();
+            // Tick input
+            Input.tick();
+
+            glfwSwapBuffers(window); 
+            glfwPollEvents();
+        }
     }
 }

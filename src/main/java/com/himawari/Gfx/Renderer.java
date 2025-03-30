@@ -1,10 +1,8 @@
 package com.himawari.Gfx;
 
-import static io.github.libsdl4j.api.render.SdlRender.SDL_DestroyTexture;
-import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderClear;
-import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderCopy;
-import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderPresent;
-import static io.github.libsdl4j.api.render.SdlRender.SDL_SetRenderDrawColor;
+import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
+import static org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT;
+import static org.lwjgl.opengl.GL11.glClear;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,9 +14,6 @@ import com.himawari.HLA.Vec3;
 import com.himawari.Recording.Recorder;
 import com.himawari.Utils.Utils;
 
-import io.github.libsdl4j.api.render.SDL_Renderer;
-import io.github.libsdl4j.api.render.SDL_Texture;
-
 public class Renderer {
 
     // Recorder for the current frame
@@ -26,20 +21,17 @@ public class Renderer {
 
     // List of meshes to display
     public static List<Mesh> renderQueue = new ArrayList<Mesh>();
+    
+    // Definitions
     public static RenderMode renderMode = RenderMode.SOLID;
     public static RenderTarget renderTarget = RenderTarget.COLORBUFFER;
+    public static Color clearColor = Color.BLACK;
 
-    public static void Render(SDL_Renderer renderer){
 
-        // Draw the clear color
-        SDL_SetRenderDrawColor(renderer, (byte)0, (byte)0, (byte)0, (byte)255);
-        SDL_RenderClear(renderer);
-        
-        // Clear buffers
-        BackBuffer.ClearBackBuffer();
-        ZBuffer.ClearDepthBuffer();
+    public static void Render(){
 
-        SDL_SetRenderDrawColor(renderer, (byte)255, (byte)255, (byte)255, (byte)255);
+        // At the start of each render loop
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Set camera position for this frame
         DefineCameraProjection();
@@ -53,20 +45,18 @@ public class Renderer {
 
             // Buffer rendering
             // For each face of the mesh draw it's triangles
-            BufferFaceTriangles(trianglePool, mesh, renderer);
+            BufferFaceTriangles(trianglePool, mesh);
         }
 
         // Render the current frame
-        SDL_Texture renderPixels = BackBuffer.FetchTexture(renderer);
-        SDL_RenderCopy(renderer, renderPixels, null, null);
-        SDL_RenderPresent(renderer);
+        // SDL_Texture renderPixels = BackBuffer.FetchTexture(renderer);
+        // SDL_RenderCopy(renderer, renderPixels, null, null);
+        // SDL_RenderPresent(renderer);
 
-        // Save the frane to a file
-        recorder.tickRecording(renderPixels, renderer);
+        // // Save the frane to a file
+        // recorder.tickRecording(renderPixels, renderer);
 
-        SDL_DestroyTexture(renderPixels);
-
-        ZBuffer.SwapDepthBuffers();
+        // SDL_DestroyTexture(renderPixels);
     }
 
     // Efectuate the rotation of the points in 3D space
@@ -129,7 +119,7 @@ public class Renderer {
     }
 
     // Unlink the faces and buffer the rendering of the faces
-    private static void BufferFaceTriangles(Vec3[] vertices, Mesh mesh, SDL_Renderer renderer){
+    private static void BufferFaceTriangles(Vec3[] vertices, Mesh mesh){
 
         int[][] faces = mesh.faces;
         for (int i = 0; i < faces.length; i++) {
@@ -187,10 +177,10 @@ public class Renderer {
                     // Buffer the face triangle
                     switch (Renderer.renderMode) {
                         case WIREFRAME:
-                            Graphics.DrawTriangle(renderer, screenSplitTriangle, lightShade);
+                            Graphics.DrawTriangle(screenSplitTriangle, lightShade);
                         break;
                         case SOLID:
-                            Graphics.FillTriangle(renderer, screenSplitTriangle, lightShade);
+                            Graphics.FillTriangle(screenSplitTriangle, lightShade);
                             break;
                     }
                 }

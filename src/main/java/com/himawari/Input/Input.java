@@ -1,49 +1,60 @@
 package com.himawari.Input;
 
-import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_A;
-import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_D;
-import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_DOWN;
-import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_LEFT;
-import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_RIGHT;
-import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_S;
-import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_UP;
-import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_W;
+import static org.lwjgl.glfw.GLFW.GLFW_PRESS;
+import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
+
+import java.nio.IntBuffer;
 
 import com.himawari.Camera.Camera;
 import com.himawari.HLA.Vec3;
 import com.himawari.Utils.Window;
-import com.sun.jna.Pointer;
-
-import io.github.libsdl4j.api.keyboard.SdlKeyboard;
 
 public class Input {
 
     static float moveSpeed = 12f;
 
-    private static final int UpOffset = SdlKeyboard.SDL_GetScancodeFromKey(SDLK_UP);
-    private static final int DownOffset = SdlKeyboard.SDL_GetScancodeFromKey(SDLK_DOWN);
-    private static final int RightOffset = SdlKeyboard.SDL_GetScancodeFromKey(SDLK_RIGHT);
-    private static final int LeftOffset = SdlKeyboard.SDL_GetScancodeFromKey(SDLK_LEFT);
+    public static IntBuffer keyStates;
 
-    private static final int WOffset = SdlKeyboard.SDL_GetScancodeFromKey(SDLK_W);
-    private static final int SOffset = SdlKeyboard.SDL_GetScancodeFromKey(SDLK_S);
-    private static final int AOffset = SdlKeyboard.SDL_GetScancodeFromKey(SDLK_A);
-    private static final int DOffset = SdlKeyboard.SDL_GetScancodeFromKey(SDLK_D);
+    public static final int WOffset = 87;
+    public static final int AOffset = 65;
+    public static final int SOffset = 83;
+    public static final int DOffset = 68;
+    public static final int UpOffset = 265;
+    public static final int DownOffset = 264;
+    public static final int RightOffset = 262;
+    public static final int LeftOffset = 263;
 
-    public static void KeyDown(Pointer keyStates){
+    public static void Init() {
+        keyStates = IntBuffer.allocate(512);
+    }
 
-        if (keyStates.getByte(UpOffset) != 0) Camera.position.y += moveSpeed * Window.frameDelta;
-        if (keyStates.getByte(DownOffset) != 0) Camera.position.y -= moveSpeed * Window.frameDelta;
+    public static boolean isKeyDown(int key) {
+        return keyStates.get(key) == 1;
+    }
 
-        if (keyStates.getByte(RightOffset) != 0) Camera.position.x += moveSpeed * Window.frameDelta;
-        if (keyStates.getByte(LeftOffset) != 0) Camera.position.x -= moveSpeed * Window.frameDelta;
+    public static void tick(){
 
-        Vec3 vforward = Camera.lookDirection.copy().scale(moveSpeed).scale((float) Window.frameDelta);
+        if (isKeyDown(UpOffset)) Camera.position.y += moveSpeed * Window.getInstance().frameDelta;
+        if (isKeyDown(DownOffset)) Camera.position.y -= moveSpeed * Window.getInstance().frameDelta;
 
-        if (keyStates.getByte(WOffset) != 0) Camera.position.sum(vforward);
-        if (keyStates.getByte(SOffset) != 0) Camera.position.subtract(vforward);
+        if (isKeyDown(RightOffset)) Camera.position.x += moveSpeed * Window.getInstance().frameDelta;
+        if (isKeyDown(LeftOffset)) Camera.position.x -= moveSpeed * Window.getInstance().frameDelta;
 
-        if (keyStates.getByte(AOffset) != 0) Camera.fYaw -= 2 * Window.frameDelta;
-        if (keyStates.getByte(DOffset) != 0) Camera.fYaw += 2 * Window.frameDelta;
+        Vec3 vforward = Camera.lookDirection.copy().scale(moveSpeed).scale((float) Window.getInstance().frameDelta);
+
+        if (isKeyDown(WOffset)) Camera.position.sum(vforward);
+        if (isKeyDown(SOffset)) Camera.position.subtract(vforward);
+
+        if (isKeyDown(AOffset)) Camera.fYaw -= 2 * Window.getInstance().frameDelta;
+        if (isKeyDown(DOffset)) Camera.fYaw += 2 * Window.getInstance().frameDelta;
+    }
+
+    public static void keyCallback(int key, int action) {
+        
+        if (action == GLFW_PRESS) {
+            keyStates.put(key, 1);
+        } else if (action == GLFW_RELEASE) {    
+            keyStates.put(key, 0);
+        }
     }
 }

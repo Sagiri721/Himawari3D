@@ -1,22 +1,18 @@
 package com.himawari.Utils;
 
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.stream.Collectors;
-
-import org.slf4j.helpers.Util;
-
-import com.himawari.Gfx.Color;
 import com.himawari.Gfx.Projection;
 import com.himawari.HLA.Mat4;
 import com.himawari.HLA.Triangle;
 import com.himawari.HLA.Vec3;
-import com.himawari.HLA.Vec4;
-
-import io.github.libsdl4j.api.render.SDL_Vertex;
 
 public class Utils {
     
@@ -31,11 +27,6 @@ public class Utils {
         reader.close();
 
         return fileContent;
-    }
-
-    // Convert a point to an SDL vertex
-    public static SDL_Vertex ToVertex(Vec3 point, Vec4 color){
-        return new SDL_Vertex(point.x, point.y, (byte) color.x, (byte) color.y, (byte) color.z, (byte) color.w,  0f, 0f);
     }
 
     // Print matrix
@@ -210,5 +201,27 @@ public class Utils {
 
     public static final byte[] FloatToByteArray(float value) {
         return IntToByteArray(Float.floatToIntBits(value));
+    }
+
+    public static BufferedImage CreateCharImage(Font font, char c) {
+        
+        BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = image.createGraphics();
+
+        g.setFont(font);
+        FontMetrics metrics = g.getFontMetrics();
+        g.dispose();
+
+        int charWidth = metrics.charWidth(c);
+        int charHeight = metrics.getHeight();
+
+        image = new BufferedImage(charWidth, charHeight, BufferedImage.TYPE_INT_ARGB);
+        g = image.createGraphics();
+
+        g.setFont(font);
+        g.drawString(String.valueOf(c), 0, metrics.getAscent());
+        g.dispose();
+
+        return image;
     }
 }
