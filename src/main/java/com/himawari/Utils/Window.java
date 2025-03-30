@@ -4,17 +4,21 @@ import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 
+import com.himawari.Gfx.Color;
+import com.himawari.Gfx.Graphics;
 import com.himawari.Gfx.Projection;
 import com.himawari.Gfx.Renderer;
-import com.himawari.HLA.Vec3;
+import com.himawari.Gfx.Text;
+import com.himawari.HLA.Vec2;
 import com.himawari.Input.Input;
-import com.sun.jna.Pointer;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.NULL;
+
+import java.awt.image.BufferedImage;
+import java.nio.ByteBuffer;
 
 public class Window implements AutoCloseable {
 
@@ -124,6 +128,13 @@ public class Window implements AutoCloseable {
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
 
+        // texture envoronment
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+        // Alpha blending
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
         // Set up OpenGL
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
@@ -135,6 +146,11 @@ public class Window implements AutoCloseable {
     }
 
     private void Loop() {
+
+        BufferedImage image = Utils.loadImage("debug.png");
+        int textureId = Utils.createTexture(image);
+
+        Text text = new Text("Hello World", "Arial", 0, 22);
         
         glClearColor(Renderer.clearColor.r, Renderer.clearColor.g, Renderer.clearColor.b, Renderer.clearColor.a);
 
@@ -154,6 +170,9 @@ public class Window implements AutoCloseable {
             //Renderer.renderQueue.get(0).transform.Rotate(new Vec3(0.01f,0.01f, 0));
 
             Renderer.Render();
+
+            //Graphics.RenderTexture(textureId, 0, 0, 84, 17);
+            text.Render(new Vec2(0, 0), Color.RED);
 
             // Tick input
             Input.tick();
