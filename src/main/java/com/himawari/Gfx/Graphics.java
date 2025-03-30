@@ -2,6 +2,7 @@ package com.himawari.Gfx;
 
 import static org.lwjgl.opengl.GL11.GL_BLEND;
 import static org.lwjgl.opengl.GL11.GL_CLAMP;
+import static org.lwjgl.opengl.GL11.GL_LINES;
 import static org.lwjgl.opengl.GL11.GL_MODULATE;
 import static org.lwjgl.opengl.GL11.GL_NEAREST;
 import static org.lwjgl.opengl.GL11.GL_NO_ERROR;
@@ -59,12 +60,24 @@ public class Graphics {
         // BackBuffer.FillBufferLine(triangle.get(0).x, triangle.get(0).y, triangle.get(1).x, triangle.get(1).y, color);
         // BackBuffer.FillBufferLine(triangle.get(1).x, triangle.get(1).y, triangle.get(2).x, triangle.get(2).y, color);
         // BackBuffer.FillBufferLine(triangle.get(2).x, triangle.get(2).y, triangle.get(0).x, triangle.get(0).y, color);
+
+        glColor3ub(color.r, color.g, color.b);
+
+        glBegin(GL_LINES);
+        for (int i = 0; i < 3; i++) {
+
+            glVertex2f(triangle.vertices[i].x, triangle.vertices[i].y);
+            glVertex2f(triangle.vertices[(i + 1) % 3].x, triangle.vertices[(i + 1) % 3].y);
+
+        }
+        glEnd();
     }
 
     // Fill the triangle's geometry
     public static void FillTriangle(Triangle triangle, Color color){
         
         glColor3ub(color.r, color.g, color.b);
+
         glBegin(GL_TRIANGLES);
         
         for (int i = 0; i < 3; i++) {

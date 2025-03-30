@@ -87,9 +87,7 @@ public class Window implements AutoCloseable {
         // Configure GLFW window
         glfwDefaultWindowHints();
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); // the window will stay visible after creation
-        
-        if (config.resizable)
-            glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE); // The window will be resizable
+        glfwWindowHint(GLFW_RESIZABLE, config.resizable ? GLFW_TRUE : GLFW_FALSE);
 
         // Create the window
         window = glfwCreateWindow(config.width, config.height, name, NULL, NULL);
