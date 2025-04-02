@@ -2,6 +2,7 @@ package com.himawari.Utils;
 
 import com.himawari.Gfx.Color;
 import com.himawari.Gfx.IRenderer;
+import com.himawari.Gfx.RendererCPU;
 import com.himawari.Gfx.RendererGPU;
 
 public class WindowConfig {
@@ -17,7 +18,7 @@ public class WindowConfig {
 
     public final Color clearColor;
 
-    public WindowConfig() {
+    public WindowConfig(boolean useGPU) {
 
         this.width = 768;
         this.height = 768;
@@ -29,7 +30,7 @@ public class WindowConfig {
 
         this.clearColor = Color.BLACK;
 
-        this.targetRenderer = RendererGPU.class;
+        this.targetRenderer = useGPU ? RendererGPU.class : RendererCPU.class;
     }
 
     public WindowConfig(int width, int height, String name) {

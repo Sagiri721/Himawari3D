@@ -16,7 +16,7 @@ public class Main {
         // BackBuffer.Init();
         // ZBuffer.Init();
 
-        Window myWindow = new Window(new WindowConfig());
+        Window myWindow = new Window(new WindowConfig(true));
 
         // Rendering shit
         Mesh cube = Mesh.LoadFrom("models/mountains.obj");
