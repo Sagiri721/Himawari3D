@@ -1,6 +1,7 @@
 package com.himawari.Utils;
 
 import static org.lwjgl.opengl.GL11.GL_CLAMP;
+import static org.lwjgl.opengl.GL11.GL_FALSE;
 import static org.lwjgl.opengl.GL11.GL_LINEAR;
 import static org.lwjgl.opengl.GL11.GL_RGBA;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
@@ -23,15 +24,17 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 import javax.imageio.ImageIO;
 
 import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.GL30;
 
 import com.himawari.Gfx.Projection;
+import com.himawari.Gfx.Window;
 import com.himawari.HLA.Mat4;
 import com.himawari.HLA.Triangle;
+import com.himawari.HLA.Vec2;
 import com.himawari.HLA.Vec3;
 
 public class Utils {
@@ -112,7 +115,7 @@ public class Utils {
         return normal;
     }
 
-    private static Vec3 Vec3IntersectPlane(Vec3 plane, Vec3 normal, Vec3 lineStart, Vec3 lineEnd){
+    public static Vec3 Vec3IntersectPlane(Vec3 plane, Vec3 normal, Vec3 lineStart, Vec3 lineEnd){
 
         normal = normal.normalized();
         float planeD = -Vec3.DotProduct(normal, plane);
@@ -126,77 +129,10 @@ public class Utils {
         return lineStart.copy().sum(lineIntersec);
     }
 
-    private static float DistanceToShortestPlanePoint(Vec3 p, Vec3 normal, Vec3 plane){
+    public static float DistanceToShortestPlanePoint(Vec3 p, Vec3 normal, Vec3 plane){
         
         normal = normal.normalized();
         return (normal.x * p.x + normal.y * p.y + normal.z * p.z - Vec3.DotProduct(normal, plane));
-    }
-
-    public static int ClipTriangleAgainstPlane(Vec3 plane, Vec3 normal, Triangle face, Triangle return1, Triangle return2){
-
-        // Normalize the original plane normal
-        normal.normalized();
-
-        // This variables will store the number of points inside and outside the plane space
-        // As well as their positions
-        Vec3[] insidePoints = new Vec3[3], outsidePoints = new Vec3[3];
-        int nInsidePoints = 0, nOutsidePoints = 0;
-
-        // The distance of every point in the original triangle to the given plane
-        Float[] originDistance = Arrays.stream(face.vertices).map(v -> DistanceToShortestPlanePoint(v, normal, plane)).toArray(Float[]::new);
-
-        for (int i = 0; i < originDistance.length; i++) {
-            
-            // Get the Float class value
-            float value = originDistance[i].floatValue();
-
-            // When distance is positive, the vertex is inside
-            // When it is negative, it is outside
-            if(value >= 0) insidePoints[nInsidePoints++] = face.vertices[i];
-            else outsidePoints[nOutsidePoints++] = face.vertices[i];
-        }
-
-        if(nInsidePoints == 0){
-            // All points exist on the outside of the plane
-            // Skip rendering
-            return 0;
-        }
-
-        if(nInsidePoints == 3){
-            // All points points exist inside the the plane
-            // Render the triangle without any modifications
-            return1.set(face);
-            return 1;
-        }
-
-        if(nInsidePoints == 1 && nOutsidePoints == 2){
-
-            // One point is inside and teo outside
-            // We can construct a new smaller triangle we 2 new points
-            // That's out output
-            return1.set(0, insidePoints[0]); 
-            return1.set(1, Vec3IntersectPlane(plane, normal, insidePoints[0], outsidePoints[0]));
-            return1.set(2, Vec3IntersectPlane(plane, normal, insidePoints[0], outsidePoints[1]));
-
-            return 1;
-        }
-
-        if(nInsidePoints == 2 && nOutsidePoints == 1){
-
-            // When two points are inside the plane and the other one's outside
-            // We form a quad, and so, we need to break it up into two triangles
-            return1.set(0, insidePoints[0]);
-            return1.set(1, insidePoints[1]);
-            return1.set(2, Vec3IntersectPlane(plane, normal, insidePoints[0], outsidePoints[0]));
-            
-            return2.set(0, insidePoints[1]);
-            return2.set(1, return1.get(2));
-            return2.set(2, Vec3IntersectPlane(plane, normal, insidePoints[1], outsidePoints[0]));
-
-            return 2;
-        }
-
-        return 0;
     }
 
     public static float EulerToRadians(float degrees){
@@ -293,5 +229,58 @@ public class Utils {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
         
         return textureID;
+    }
+
+    private static int CompileShader(String source, int type) {
+
+        int id = GL30.glCreateShader(type);
+        GL30.glShaderSource(id, source);
+
+        GL30.glCompileShader(id);
+
+        // Check for compilation errors
+        int result = GL30.glGetShaderi(id, GL30.GL_COMPILE_STATUS);
+        if(result == GL_FALSE) {
+            Logger.LogError(GL30.glGetShaderInfoLog(id));
+            return 0;
+        }
+
+        return id;
+    }
+
+    /**
+     * @param vertexShader source code for the vertex shader
+     * @param fragmentShader source code for the fragment shader
+     * @return
+     */
+    public static int CreateShader(String vertexShader, String fragmentShader) {
+
+        int program = GL30.glCreateProgram();
+
+        // Load shader source code
+        int vs = CompileShader(vertexShader, GL30.GL_VERTEX_SHADER);
+        int fs = CompileShader(fragmentShader, GL30.GL_FRAGMENT_SHADER);
+
+        // Attach shaders to program
+        GL30.glAttachShader(program, vs);
+        GL30.glAttachShader(program, fs);
+
+        GL30.glLinkProgram(program);
+        GL30.glValidateProgram(program); // TODO: learn about this https://docs.gl/gl3/glValidateProgram
+
+        // Delete shaders after linking
+        // They no longer need to be stored in memory
+        GL30.glDeleteShader(vs);
+        GL30.glDeleteShader(fs);
+
+        return program;
+    }
+
+    public static Vec2 screenSpaceToNormalizedCoordinates(Vec3 screnSpace) {
+
+        float xx = (screnSpace.x / Window.getInstance().config().width) * 2 - 1;
+        float yy = (screnSpace.y / Window.getInstance().config().height) * -2 + 1;
+
+        return new Vec2(xx, yy);
     }
 }

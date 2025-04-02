@@ -3,11 +3,8 @@ package com.himawari.Gfx;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-import java.util.Arrays;
 
-import com.himawari.HLA.Triangle;
 import com.himawari.HLA.Vec3;
-import com.himawari.Utils.Window;
 
 public class ZBuffer {
     

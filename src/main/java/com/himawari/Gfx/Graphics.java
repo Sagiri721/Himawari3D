@@ -50,7 +50,7 @@ import org.lwjgl.BufferUtils;
 import com.himawari.HLA.Triangle;
 import com.himawari.HLA.Vec2;
 import com.himawari.HLA.Vec3;
-import com.himawari.Utils.Window;
+import com.himawari.Utils.Utils;
 
 public class Graphics {
     
@@ -66,9 +66,11 @@ public class Graphics {
         glBegin(GL_LINES);
         for (int i = 0; i < 3; i++) {
 
-            glVertex2f(triangle.vertices[i].x, triangle.vertices[i].y);
-            glVertex2f(triangle.vertices[(i + 1) % 3].x, triangle.vertices[(i + 1) % 3].y);
+            Vec2 normalizeCoordinates = Utils.screenSpaceToNormalizedCoordinates(triangle.vertices[i]);
+            Vec2 normalizeCoordinatesNext = Utils.screenSpaceToNormalizedCoordinates(triangle.vertices[(i + 1) % 3]);
 
+            glVertex2f(normalizeCoordinates.x, normalizeCoordinates.y);
+            glVertex2f(normalizeCoordinatesNext.x, normalizeCoordinatesNext.y);
         }
         glEnd();
     }
@@ -82,10 +84,10 @@ public class Graphics {
         
         for (int i = 0; i < 3; i++) {
             
-            Vec2 screenPos = new Vec2(triangle.vertices[i].x, triangle.vertices[i].y);
+            Vec2 normalizeCoordinates = Utils.screenSpaceToNormalizedCoordinates(triangle.vertices[i]);
 
-            float depth = ZBuffer.ProjectOntoToFace(triangle.get(0), triangle.get(1), triangle.get(2), new Vec3(screenPos)).z;
-            glVertex3f(screenPos.x, screenPos.y, -depth);
+            float depth = ZBuffer.ProjectOntoToFace(triangle.get(0), triangle.get(1), triangle.get(2), new Vec3(triangle.vertices[0].x, triangle.vertices[0].y, 0)).z;
+            glVertex3f(normalizeCoordinates.x, normalizeCoordinates.y, depth);
         }
 
         glEnd();

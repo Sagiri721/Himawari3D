@@ -86,6 +86,6 @@ public class Color {
 
     @Override
     public String toString() {
-        return "Color [a=" + a + ", b=" + b + ", g=" + g + ", r=" + r + "]";
+        return "Color [a=" + a + ", r=" + r + ", g=" + g + ", b=" + b + "]";
     }
 }

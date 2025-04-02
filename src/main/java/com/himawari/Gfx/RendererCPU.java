@@ -4,31 +4,32 @@ import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
 import static org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT;
 import static org.lwjgl.opengl.GL11.glClear;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.IOException;
+
+import org.lwjgl.opengl.GL30;
 
 import com.himawari.Camera.Camera;
 import com.himawari.Camera.Clipping;
 import com.himawari.HLA.Triangle;
+import com.himawari.HLA.Vec2;
 import com.himawari.HLA.Vec3;
-import com.himawari.Recording.Recorder;
+import com.himawari.Utils.RenderEnvironment;
 import com.himawari.Utils.Utils;
 
-public class Renderer {
+public class RendererCPU extends RenderEnvironment implements IRenderer {
 
-    // Recorder for the current frame
-    public static Recorder recorder = new Recorder(1, true);
+    public RendererCPU() {}
 
-    // List of meshes to display
-    public static List<Mesh> renderQueue = new ArrayList<Mesh>();
-    
-    // Definitions
-    public static RenderMode renderMode = RenderMode.SOLID;
-    public static RenderTarget renderTarget = RenderTarget.COLORBUFFER;
-    public static Color clearColor = Color.BLACK;
+    @Override
+    public void Init() {
+        
+        // Load buffers
+        // BackBuffer.Init();
+        // ZBuffer.Init();
+    }
 
-
-    public static void Render(){
+    @Override
+    public void Render(){
 
         // At the start of each render loop
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -37,7 +38,7 @@ public class Renderer {
         DefineCameraProjection();
 
         // Loop through stored meshes and draw each of them
-        for (Mesh mesh : renderQueue) {
+        for (Mesh mesh : getRenderQueue()) {
 
             // Before buffering the renderer
             // Treat and cache the vertices after all projection operations
@@ -47,16 +48,6 @@ public class Renderer {
             // For each face of the mesh draw it's triangles
             BufferFaceTriangles(trianglePool, mesh);
         }
-
-        // Render the current frame
-        // SDL_Texture renderPixels = BackBuffer.FetchTexture(renderer);
-        // SDL_RenderCopy(renderer, renderPixels, null, null);
-        // SDL_RenderPresent(renderer);
-
-        // // Save the frane to a file
-        // recorder.tickRecording(renderPixels, renderer);
-
-        // SDL_DestroyTexture(renderPixels);
     }
 
     // Efectuate the rotation of the points in 3D space
@@ -119,7 +110,7 @@ public class Renderer {
     }
 
     // Unlink the faces and buffer the rendering of the faces
-    private static void BufferFaceTriangles(Vec3[] vertices, Mesh mesh){
+    private void BufferFaceTriangles(Vec3[] vertices, Mesh mesh){
 
         int[][] faces = mesh.faces;
         for (int i = 0; i < faces.length; i++) {
@@ -149,7 +140,7 @@ public class Renderer {
 
             Color lightShade;
 
-            if (renderTarget == RenderTarget.NORMALMAP) {
+            if (getRenderTarget() == RenderTarget.NORMALMAP) {
                 // Map normal to color
                 lightShade = new Color(
                     (int) Math.abs(realNormal.x * 255),
@@ -158,9 +149,10 @@ public class Renderer {
                     255
                 );
             }else {    
-                lightShade = (mesh.lit && Renderer.renderMode == RenderMode.SOLID) ? 
-                Color.getLuminanceVariation(mesh.base, lightProduct) : 
-                mesh.base;
+
+                lightShade = (mesh.lit && getRenderMode() == RenderMode.SOLID) ? 
+                    Color.getLuminanceVariation(mesh.base, lightProduct) : 
+                    mesh.base;
             }
 
             // Apply triangle clipping against near plane
@@ -175,7 +167,7 @@ public class Renderer {
                 for (Triangle screenSplitTriangle : Clipping.ClipTrianglesToScreen(triangleToRaster)) {
                     
                     // Buffer the face triangle
-                    switch (Renderer.renderMode) {
+                    switch (getRenderMode()) {
                         case WIREFRAME:
                             Graphics.DrawTriangle(screenSplitTriangle, lightShade);
                         break;
@@ -193,4 +185,11 @@ public class Renderer {
     private static Triangle UnlinkTriangleFaceVertices(int[] linkedface, Vec3[] vertices){
         return new Triangle(vertices[(int) linkedface[0]], vertices[(int) linkedface[1]], vertices[(int) linkedface[2]]);
     }
+
+    @Override
+    public void Dispose() {
+        // BackBuffer.Dispose();
+        // ZBuffer.Dispose();
+    }
+    
 }

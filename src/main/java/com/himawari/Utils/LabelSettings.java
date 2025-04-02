@@ -1,4 +1,4 @@
-package com.himawari.Gfx;
+package com.himawari.Utils;
 
 import java.awt.Font;
 

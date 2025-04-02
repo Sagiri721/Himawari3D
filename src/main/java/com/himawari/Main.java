@@ -3,9 +3,9 @@ package com.himawari;
 import com.himawari.Gfx.Color;
 import com.himawari.Gfx.Mesh;
 import com.himawari.Gfx.Primitives;
-import com.himawari.Gfx.Renderer;
+import com.himawari.Gfx.RendererGPU;
+import com.himawari.Gfx.Window;
 import com.himawari.HLA.Vec3;
-import com.himawari.Utils.Window;
 import com.himawari.Utils.WindowConfig;
 
 public class Main {
@@ -16,6 +16,8 @@ public class Main {
         // BackBuffer.Init();
         // ZBuffer.Init();
 
+        Window myWindow = new Window(new WindowConfig());
+
         // Rendering shit
         Mesh cube = Mesh.LoadFrom("models/mountains.obj");
         cube.base = Color.BLUE;
@@ -25,9 +27,10 @@ public class Main {
 
         //Gizmos.DrawNormals(cube);
 
-        Renderer.renderQueue.add(cube);
+        Window.getInstance().currentRenderEnvironment().AddMesh(cube);
         //Renderer.renderQueue.add(rotationTest);
 
-        new Window(new WindowConfig());
+        myWindow.Loop();
+        myWindow.close();
     }
 }

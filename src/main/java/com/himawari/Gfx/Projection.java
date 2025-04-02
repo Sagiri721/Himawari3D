@@ -8,7 +8,6 @@ import static org.lwjgl.opengl.GL11.glOrtho;
 
 import com.himawari.HLA.Mat4;
 import com.himawari.HLA.Vec3;
-import com.himawari.Utils.Window;
 
 public class Projection {
     

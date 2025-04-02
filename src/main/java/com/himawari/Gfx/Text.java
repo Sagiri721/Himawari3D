@@ -13,6 +13,7 @@ import static org.lwjgl.opengl.GL11.GL_TEXTURE_WIDTH;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_S;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_T;
 import static org.lwjgl.opengl.GL11.glBindTexture;
+import static org.lwjgl.opengl.GL11.glDeleteTextures;
 import static org.lwjgl.opengl.GL11.glGenTextures;
 import static org.lwjgl.opengl.GL11.glGetTexLevelParameteri;
 import static org.lwjgl.opengl.GL11.glTexImage2D;
@@ -37,9 +38,10 @@ import javax.imageio.ImageIO;
 import org.lwjgl.BufferUtils;
 
 import com.himawari.HLA.Vec2;
+import com.himawari.Utils.LabelSettings;
 import com.himawari.Utils.Utils;
 
-public class Text {
+public class Text implements AutoCloseable {
 
     // The text texture to render
     public int id;
@@ -71,6 +73,9 @@ public class Text {
     }
 
     public void setText(String text) {
+
+        // Remove the old texture
+        close();
 
         this.text = text;
         UpdateImageDimensions();
@@ -118,5 +123,12 @@ public class Text {
 
     public void Render(Vec2 position, Color color) {
         Graphics.RenderTexture(id, position.x, position.y, imageDimensions.x, imageDimensions.y, Optional.of(color));
+    }
+
+    @Override
+    public void close() {
+        
+        // Delete the texture
+        glDeleteTextures(id);
     }
 }

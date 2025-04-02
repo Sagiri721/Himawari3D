@@ -2,7 +2,6 @@ package com.himawari.Gfx;
 
 import com.himawari.HLA.Vec3;
 import com.himawari.Utils.Utils;
-import com.himawari.Utils.Window;
 import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
 
@@ -154,7 +153,7 @@ public class BackBuffer {
 
         byte[] flatBuffer = new byte[bufferWidth * bufferHeight * 4];
 
-        if (Renderer.renderTarget == RenderTarget.COLORBUFFER) {        
+        if (Window.getInstance().currentRenderEnvironment().getRenderTarget() == RenderTarget.COLORBUFFER) {        
     
             for (int i = 0; i < flatBuffer.length; i+=4) {
     
@@ -171,7 +170,7 @@ public class BackBuffer {
                 flatBuffer[i + 2] = c.b;
                 flatBuffer[i + 3] = c.a;
             }
-        } else if (Renderer.renderTarget == RenderTarget.ZBUFFER) {
+        } else if (Window.getInstance().currentRenderEnvironment().getRenderTarget() == RenderTarget.ZBUFFER) {
     
             for (int i = 0; i < flatBuffer.length; i+=4) {
     

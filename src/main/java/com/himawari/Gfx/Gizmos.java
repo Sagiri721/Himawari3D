@@ -39,7 +39,7 @@ public final class Gizmos {
 
             cube.lit = false;
 
-            Renderer.renderQueue.add(cube);
+            Window.getInstance().currentRenderEnvironment().AddMesh(cube);
         }
     }
 }

@@ -1,17 +1,16 @@
-package com.himawari.Utils;
+package com.himawari.Gfx;
 
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 
-import com.himawari.Gfx.Color;
-import com.himawari.Gfx.Graphics;
-import com.himawari.Gfx.Projection;
-import com.himawari.Gfx.Renderer;
-import com.himawari.Gfx.Text;
-import com.himawari.Gfx.LabelSettings;
 import com.himawari.HLA.Vec2;
 import com.himawari.Input.Input;
+import com.himawari.Utils.LabelSettings;
+import com.himawari.Utils.Logger;
+import com.himawari.Utils.RenderEnvironment;
+import com.himawari.Utils.Utils;
+import com.himawari.Utils.WindowConfig;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
@@ -20,10 +19,13 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 
 import java.awt.Font;
 import java.awt.image.BufferedImage;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 
 public class Window implements AutoCloseable {
 
     private static Window instance;
+    private IRenderer renderer;
 
     public static Window getInstance(){
         return instance;
@@ -36,7 +38,7 @@ public class Window implements AutoCloseable {
     public float aspectRatio;
 
     // Tick tracking
-    public long ticks, lastFrame, elapsedTime;
+    public long ticks, lastFrame, elapsedTime, startTime;
     public double fps, frameDelta;
 
     private final WindowConfig config;
@@ -55,19 +57,18 @@ public class Window implements AutoCloseable {
         // Init input buffer
         Input.Init();
 
-        InitWindow(config.name);
-        Loop();
-
-        // Clean up
-        close();
+        InitWindow();
     }
 
     @Override
     public void close(){
+        
+        long simulationTime = System.currentTimeMillis() - startTime;
 
-        System.out.println("#### Execution finished ####");
-        System.out.println("Ticks: " + ticks);
-        System.out.println("- Cleaning window");
+        Logger.LogInfo("#### Execution finished ####");
+        Logger.LogInfo("Ticks: " + ticks);
+        Logger.LogInfo("Simulation time: " + simulationTime + "ms");
+        Logger.LogInfo("- Cleaning window");
 
         // Free the window callbacks and destroy the window
         glfwFreeCallbacks(window);
@@ -76,7 +77,9 @@ public class Window implements AutoCloseable {
         glfwSetErrorCallback(null).free();
     }
 
-    public void InitWindow(String name){
+    private void InitWindow(){
+
+        Logger.LogInfo("#### Initializing window ####");
 
         // Setup an error callback
         GLFWErrorCallback.createPrint(System.err).set();
@@ -90,7 +93,7 @@ public class Window implements AutoCloseable {
         glfwWindowHint(GLFW_RESIZABLE, config.resizable ? GLFW_TRUE : GLFW_FALSE);
 
         // Create the window
-        window = glfwCreateWindow(config.width, config.height, name, NULL, NULL);
+        window = glfwCreateWindow(config.width, config.height, config.name, NULL, NULL);
 
         if (window == NULL)
             throw new RuntimeException("Failed to create the GLFW window");
@@ -123,12 +126,16 @@ public class Window implements AutoCloseable {
         // This creates the GLCapabilities instance and makes the OpenGL bindings available for use
         GL.createCapabilities();
 
-        // Project window space to normalized device coordinates
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-        glOrtho(0, config.width, config.height, 0, -1, 1);
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
+        Logger.LogInfo("OpenGL version: " + glGetString(GL_VERSION));
+
+        // // Project window space to normalized device coordinates
+        // glViewport(0, 0, config.width, config.height);
+
+        // glMatrixMode(GL_PROJECTION);
+        // glLoadIdentity();
+        // glOrtho(0, config.width, config.height, 0, -1, 1);
+        // glMatrixMode(GL_MODELVIEW);
+        // glLoadIdentity();
 
         // Disable open gl culling
         glDisable(GL_CULL_FACE);
@@ -143,16 +150,51 @@ public class Window implements AutoCloseable {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         // Set up OpenGL
-        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        
+        Logger.LogInfo("OpenGL flags:");
+        Logger.LogInfo("GL_DEPTH_TEST: " + glIsEnabled(GL_DEPTH_TEST));
+        Logger.LogInfo("GL_CULL_FACE: " + glIsEnabled(GL_CULL_FACE));
+        Logger.LogInfo("GL_BLEND: " + glIsEnabled(GL_BLEND));
+
+        // Set up graphics
+        try {
+            
+            Class<? extends IRenderer> targetRenderer = config.targetRenderer;
+            Constructor<?> ctor = targetRenderer.getConstructor();
+
+            this.renderer = (IRenderer) ctor.newInstance();
+
+            Logger.LogInfo("Renderer loaded: " + this.renderer.getClass());
+
+        } catch (NoSuchMethodException e) {
+            throw new IllegalStateException("Renderer must have a constructor that takes void");
+        } catch (SecurityException e) {
+            throw new IllegalStateException("Renderer constructor must be accessible");
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        }
+        
+        if (this.renderer instanceof RenderEnvironment)
+            this.renderer.Init();
+        else throw new IllegalStateException("Renderer doesnt have an environment");
 
         ticks = 0;
         fps = 0;
         frameDelta = 0;
         elapsedTime = 0;
         lastFrame = System.currentTimeMillis();
+
+        startTime = System.currentTimeMillis();
     }
 
-    private void Loop() {
+    public void Loop() {
 
         BufferedImage image = Utils.loadImage("debug.png");
         int textureId = Utils.createTexture(image);
@@ -170,8 +212,6 @@ public class Window implements AutoCloseable {
         Text instructions2 = new Text("Press '2' to view normal map", settings);
 
         Text[] debugMenu = {title, text, instructions1, instructions2};
-        
-        glClearColor(Renderer.clearColor.r, Renderer.clearColor.g, Renderer.clearColor.b, Renderer.clearColor.a);
 
         while (!glfwWindowShouldClose(window)) {
 
@@ -188,7 +228,8 @@ public class Window implements AutoCloseable {
 
             //Renderer.renderQueue.get(0).transform.Rotate(new Vec3(0.01f,0.01f, 0));
 
-            Renderer.Render();
+            // Render the scene
+            renderer.Render();
 
             // Debug menu
             if (Input.debugMenu) {
@@ -216,5 +257,13 @@ public class Window implements AutoCloseable {
 
     public WindowConfig config() {
         return config;
+    }
+
+    public IRenderer currentRenderer() {
+        return renderer;
+    }
+
+    public RenderEnvironment currentRenderEnvironment() {
+        return (RenderEnvironment)renderer;
     }
 }

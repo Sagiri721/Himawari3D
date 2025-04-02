@@ -6,11 +6,13 @@ import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
 import java.nio.IntBuffer;
 
 import com.himawari.Camera.Camera;
+import com.himawari.Gfx.IRenderer;
 import com.himawari.Gfx.RenderMode;
 import com.himawari.Gfx.RenderTarget;
-import com.himawari.Gfx.Renderer;
+import com.himawari.Gfx.RendererGPU;
+import com.himawari.Gfx.Window;
 import com.himawari.HLA.Vec3;
-import com.himawari.Utils.Window;
+import com.himawari.Utils.RenderEnvironment;
 
 public class Input {
 
@@ -63,8 +65,15 @@ public class Input {
 
             if (key == spaceOffset) debugMenu = !debugMenu;
 
-            if (key == oneOffset) Renderer.renderMode = Renderer.renderMode == RenderMode.WIREFRAME ? RenderMode.SOLID : RenderMode.WIREFRAME;
-            if (key == twoOffset) Renderer.renderTarget = Renderer.renderTarget == RenderTarget.NORMALMAP ? RenderTarget.COLORBUFFER : RenderTarget.NORMALMAP;
+            if (key == oneOffset) {
+                RenderEnvironment re = (RenderEnvironment) Window.getInstance().currentRenderer();
+                re.setRenderMode(re.getRenderMode() == RenderMode.WIREFRAME ? RenderMode.SOLID : RenderMode.WIREFRAME);
+            }
+            if (key == twoOffset) {
+                
+                RenderEnvironment re = (RenderEnvironment) Window.getInstance().currentRenderer();
+                re.setRenderTarget(re.getRenderTarget() == RenderTarget.COLORBUFFER ? RenderTarget.NORMALMAP : RenderTarget.COLORBUFFER);                
+            }
 
         } else if (action == GLFW_RELEASE) {    
             keyStates.put(key, 0);
