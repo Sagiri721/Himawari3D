@@ -28,7 +28,7 @@ public class WindowConfig {
         this.resizable = false;
         this.startOnCenter = true;
 
-        this.clearColor = Color.BLACK;
+        this.clearColor = Color.RED;
 
         this.targetRenderer = useGPU ? RendererGPU.class : RendererCPU.class;
     }

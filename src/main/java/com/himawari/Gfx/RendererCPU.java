@@ -58,7 +58,11 @@ public class RendererCPU extends RenderEnvironment implements IRenderer {
         Vec3[] trianglePool = new Vec3[mesh.vertices.length];
         int index = 0;
 
-        for (Vec3 vertex : mesh.vertices) {
+        
+        for (int i = 0; i < mesh.vertices.length; i+=3) {
+
+            // Convert the floats to a Vec3 3 at a time
+            Vec3 vertex = new Vec3(mesh.vertices[i], mesh.vertices[i + 1], mesh.vertices[i + 2]);
 
             // Copy the current value
             trianglePool[index] = vertex.copy();
@@ -112,7 +116,7 @@ public class RendererCPU extends RenderEnvironment implements IRenderer {
     // Unlink the faces and buffer the rendering of the faces
     private void BufferFaceTriangles(Vec3[] vertices, Mesh mesh){
 
-        int[][] faces = mesh.faces;
+        short[][] faces = mesh.faces;
         for (int i = 0; i < faces.length; i++) {
             
             // 3D points that compose the trinagle face unlinked
@@ -121,7 +125,6 @@ public class RendererCPU extends RenderEnvironment implements IRenderer {
 
             // Visibility is dependant on normal calculations
             // Get this face's current normal
-            Vec3 realNormal = mesh.normals[i];
             Vec3 projNormal = Utils.CalculateFaceNormal(projTri);
             
             // Backface culling
@@ -141,13 +144,7 @@ public class RendererCPU extends RenderEnvironment implements IRenderer {
             Color lightShade;
 
             if (getRenderTarget() == RenderTarget.NORMALMAP) {
-                // Map normal to color
-                lightShade = new Color(
-                    (int) Math.abs(realNormal.x * 255),
-                    (int) Math.abs(realNormal.y * 255),
-                    (int) Math.abs(realNormal.z * 255),
-                    255
-                );
+                lightShade = Color.WHITE;
             }else {    
 
                 lightShade = (mesh.lit && getRenderMode() == RenderMode.SOLID) ? 
@@ -182,7 +179,7 @@ public class RendererCPU extends RenderEnvironment implements IRenderer {
     }
 
     // From the face vertex links, turn them to the cached vertex triangles
-    private static Triangle UnlinkTriangleFaceVertices(int[] linkedface, Vec3[] vertices){
+    private static Triangle UnlinkTriangleFaceVertices(short[] linkedface, Vec3[] vertices){
         return new Triangle(vertices[(int) linkedface[0]], vertices[(int) linkedface[1]], vertices[(int) linkedface[2]]);
     }
 

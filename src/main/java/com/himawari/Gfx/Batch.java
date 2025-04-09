@@ -33,15 +33,18 @@ import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL30;
 
 import com.himawari.HLA.Triangle;
+import com.himawari.HLA.Vec3;
+import com.himawari.Utils.Utils;
 
 public class Batch {
 
     private final byte VERTEX_SIZE = 3;
     private final byte COLOR_SIZE = 4;
+    private final byte NORMAL_SIZE = 3;
 
     // Identifiers of the opengl gpu buffers
     int vertexBuffer, indexBuffer;
-    int vertexCount = 0, triangleCount = 0, bufferSize = 0, vertexObject = 0;
+    int vertexCount = 0, bufferSize = 0, vertexObject = 0;
 
     FloatBuffer vertexData; // Java side buffer to store vertices
     IntBuffer indexData; // java side buffer to store indices
@@ -76,7 +79,7 @@ public class Batch {
         GL30.glBindBuffer(GL30.GL_ARRAY_BUFFER, vertexObject);
 
         // Allocate memory for the buffers
-        vertexData = BufferUtils.createFloatBuffer(this.bufferSize * 3 * (VERTEX_SIZE + COLOR_SIZE));
+        vertexData = BufferUtils.createFloatBuffer(this.bufferSize * 3 * (VERTEX_SIZE + COLOR_SIZE + NORMAL_SIZE));
         // Dynamic draw is an optimization hint means optimized for frequent updates
         GL30.glBufferData(GL30.GL_ARRAY_BUFFER, vertexData.capacity() * Float.BYTES, GL30.GL_DYNAMIC_DRAW); 
 
@@ -93,13 +96,18 @@ public class Batch {
         // false means the data is not normalized
         // (VERTEX_SIZE + COLOR_SIZE) * 4 is the stride, the total amount of data as its the size of each data bucket
         // 0 offset
-        GL30.glVertexAttribPointer(0, VERTEX_SIZE, GL_FLOAT, false, (VERTEX_SIZE + COLOR_SIZE) * Float.BYTES, 0);
+        GL30.glVertexAttribPointer(0, VERTEX_SIZE, GL_FLOAT, false, (VERTEX_SIZE + COLOR_SIZE + NORMAL_SIZE) * Float.BYTES, 0);
         GL30.glEnableVertexAttribArray(0);
         
         // Set color attributes
         // 1 is the offset, the second attribute
-        GL30.glVertexAttribPointer(1, COLOR_SIZE, GL_FLOAT, false, (VERTEX_SIZE + COLOR_SIZE) * Float.BYTES, VERTEX_SIZE * Float.BYTES);
+        GL30.glVertexAttribPointer(1, COLOR_SIZE, GL_FLOAT, false, (VERTEX_SIZE + COLOR_SIZE + NORMAL_SIZE) * Float.BYTES, VERTEX_SIZE * Float.BYTES);
         GL30.glEnableVertexAttribArray(1); 
+
+        // Set normal attributes
+        // 2 is the offset, the third attribute
+        GL30.glVertexAttribPointer(2, NORMAL_SIZE, GL_FLOAT, false, (VERTEX_SIZE + COLOR_SIZE + NORMAL_SIZE) * Float.BYTES, (VERTEX_SIZE + COLOR_SIZE) * Float.BYTES);
+        GL30.glEnableVertexAttribArray(2);
     }
 
     public void end() {
@@ -110,38 +118,34 @@ public class Batch {
         GL30.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
     }
 
-    public void batch(Triangle triangle, Color color) {
+    public void batch(Triangle triangle, Color color, Vec3 normal) {
 
         // Check if adding this triangle would exceed buffer capacity
         if (vertexCount + 3 > bufferSize)
             flush(); 
 
-        float r = Math.abs(color.r / 255f);
-        float g = Math.abs(color.g / 255f);
-        float b = Math.abs(color.b / 255f);
-        float a = 1;
-
-        if (r > 1f || g > 1f || b > 1f || a > 1f || r < 0f || g < 0f || b < 0f || a < 0f)  {
-            System.out.println("Color: " + color);
-            throw new IllegalArgumentException("Color values must be between 0 and 255");
-        }
+        float r = Byte.toUnsignedInt(color.r);
+        float g = Byte.toUnsignedInt(color.g);
+        float b = Byte.toUnsignedInt(color.b);
+        float a = Byte.toUnsignedInt(color.a);
 
         for (int i = 0; i < 3; i++) {
             
             // Put vertex data
-            vertexData.put(triangle.vertices[i].x)
-                .put(triangle.vertices[i].y)
+            vertexData.put(triangle.get(i).x)
+                .put(triangle.get(i).y)
                 .put(triangle.depth(i))
                 .put(r)  
                 .put(g)  
                 .put(b)
-                .put(a);
+                .put(a)
+                .put(normal.x)
+                .put(normal.y)
+                .put(normal.z);
 
             // Add index
             indexData.put(vertexCount++);
         }
-
-        triangleCount++;
 
         // Flush batch if full
         if (vertexCount >= bufferSize) flush();
@@ -167,7 +171,7 @@ public class Batch {
         // try {
 
         //     String data = "";
-        //     for (int i = 0; i < 6 * 6; i++) {
+        //     for (int i = 0; i < 6 * 7 * 6; i++) {
                 
         //         data += vertexData.get(i) + " ";
         //     }
@@ -182,7 +186,6 @@ public class Batch {
 
         // Rest the counters
         vertexCount = 0;
-        triangleCount = 0;
 
         vertexData.clear();
         indexData.clear();

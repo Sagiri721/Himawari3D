@@ -24,12 +24,14 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Random;
 
 import javax.imageio.ImageIO;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL30;
 
+import com.himawari.Gfx.Color;
 import com.himawari.Gfx.Projection;
 import com.himawari.Gfx.Window;
 import com.himawari.HLA.Mat4;
@@ -60,6 +62,27 @@ public class Utils {
                 System.out.print(m.m[i][j] + " ");
             }
             System.err.println();
+        }
+    }
+
+    public static void TransformVectorInPlace(float[] vector, Mat4 matrix) {
+        float x = vector[0];
+        float y = vector[1];
+        float z = vector[2];
+        float w = 1.0f;
+        
+        vector[0] = x * matrix.m[0][0] + y * matrix.m[1][0] + z * matrix.m[2][0] + w * matrix.m[3][0];
+        vector[1] = x * matrix.m[0][1] + y * matrix.m[1][1] + z * matrix.m[2][1] + w * matrix.m[3][1];
+        vector[2] = x * matrix.m[0][2] + y * matrix.m[1][2] + z * matrix.m[2][2] + w * matrix.m[3][2];
+        
+        // Auto perpective divide
+        if (matrix.m.length > 3 && matrix.m[0].length > 3) {
+            float w2 = x * matrix.m[0][3] + y * matrix.m[1][3] + z * matrix.m[2][3] + w * matrix.m[3][3];
+            if (w2 != 0) {
+                vector[0] /= w2;
+                vector[1] /= w2;
+                vector[2] /= w2;
+            }
         }
     }
 
@@ -104,14 +127,25 @@ public class Utils {
     }
 
     // Calculates the normal to a surface defined by 3 points
-    public static Vec3 CalculateFaceNormal(Triangle triangle){
-    
-        Vec3 line1, line2, normal = new Vec3();
-        line1 = triangle.get(1).copy().subtract(triangle.get(0).copy());
-        line2 = triangle.get(2).copy().subtract(triangle.get(0).copy());
+    public static Vec3 CalculateFaceNormal(Triangle triangle) {
 
-        normal = Vec3.CrossProduct(line1, line2).normalized();
-
+        Vec3 normal = new Vec3(0, 0, 0);
+        
+        // Calculate vectors directly without creating copies
+        float line1x = triangle.get(1).x - triangle.get(0).x;
+        float line1y = triangle.get(1).y - triangle.get(0).y;
+        float line1z = triangle.get(1).z - triangle.get(0).z;
+        
+        float line2x = triangle.get(2).x - triangle.get(0).x;
+        float line2y = triangle.get(2).y - triangle.get(0).y;
+        float line2z = triangle.get(2).z - triangle.get(0).z;
+        
+        normal.x = line1y * line2z - line1z * line2y;
+        normal.y = line1z * line2x - line1x * line2z;
+        normal.z = line1x * line2y - line1y * line2x;
+        
+        normal.normalized();
+        
         return normal;
     }
 
@@ -282,5 +316,65 @@ public class Utils {
         float yy = (screnSpace.y / Window.getInstance().config().height) * -2 + 1;
 
         return new Vec2(xx, yy);
+    }
+
+    public static int randomInt(int i, int j, long seed) {
+        
+        Random rand = new Random(seed);
+        return rand.nextInt(j - i) + i;
+    }
+    
+    public static Color randomColor(long seed) {
+
+        return new Color(
+            Utils.randomInt(0, 255, seed),
+            Utils.randomInt(0, 255, seed + 1),
+            Utils.randomInt(0, 255, seed + 2),
+            255
+        );
+    }
+
+    // Given a 3D plane, correctly project the point to the matching Z axis
+    public static Vec3 ProjectOntoToFace(Vec3 vertex1, Vec3 vertex2, Vec3 vertex3, Vec3 point){
+
+        Vec3 v1 = vertex2.copy().subtract(vertex1);
+        Vec3 v2 = vertex3.copy().subtract(vertex1);
+
+        Vec3 planeCoefficients = Vec3.CrossProduct(v1, v2);
+        float planeConstant = planeCoefficients.copy().dot(vertex1).sum();
+
+        float zComponent = (planeConstant - point.x*planeCoefficients.x - point.y * planeCoefficients.y) / planeCoefficients.z;
+        point.z = zComponent;
+
+        return point;
+    }
+
+    public static float ProjectOntoFaceScalar(float[] triangle, float pointX, float pointY) {
+        
+        float v1x = triangle[3] - triangle[0]; // v2.x - v1.x
+        float v1y = triangle[4] - triangle[1]; // v2.y - v1.y
+        float v1z = triangle[5] - triangle[2]; // v2.z - v1.z
+        
+        float v2x = triangle[6] - triangle[3]; // v3.x - v2.x
+        float v2y = triangle[7] - triangle[4]; // v3.y - v2.y
+        float v2z = triangle[8] - triangle[5]; // v3.z - v2.z
+        
+        // Cross product to get the normal vector of the plane
+        float normalX = v1y * v2z - v1z * v2y;
+        float normalY = v1z * v2x - v1x * v2z;
+        float normalZ = v1x * v2y - v1y * v2x;
+        
+        float planeConstant = -(normalX * triangle[0] + normalY * triangle[1] + normalZ * triangle[2]);
+        
+        if (normalZ == 0)
+            return 0;
+        
+        return (-planeConstant - normalX * pointX - normalY * pointY) / normalZ;
+    }
+    
+    // Keep the original method but make it use the scalar version
+    public static Vec3 ProjectOntoFace(float[] triangle, Vec3 point) {
+        point.z = ProjectOntoFaceScalar(triangle, point.x, point.y);
+        return point;
     }
 }

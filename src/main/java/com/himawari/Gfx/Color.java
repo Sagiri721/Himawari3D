@@ -12,6 +12,7 @@ public class Color {
     public static final Color RED = new Color(255,0,0,255);
     public static final Color GREEN = new Color(0,255,0,255);
     public static final Color BLUE = new Color(0,0,255,255);
+    public static final Color YELLOW = new Color(255,255,0,255);
 
     // Color rgb data
     public byte r, g, b, a;
@@ -86,6 +87,6 @@ public class Color {
 
     @Override
     public String toString() {
-        return "Color [a=" + a + ", r=" + r + ", g=" + g + ", b=" + b + "]";
+        return "Color [a=" + Byte.toUnsignedInt(a) + ", r=" + Byte.toUnsignedInt(r) + ", g=" + Byte.toUnsignedInt(g) + ", b=" + Byte.toUnsignedInt(b) + "]";
     }
 }

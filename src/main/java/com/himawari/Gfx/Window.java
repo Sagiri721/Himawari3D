@@ -150,12 +150,15 @@ public class Window implements AutoCloseable {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         // Set up OpenGL
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClearColor(config.clearColor.r, config.clearColor.g, config.clearColor.b, config.clearColor.a);
         
         Logger.LogInfo("OpenGL flags:");
         Logger.LogInfo("GL_DEPTH_TEST: " + glIsEnabled(GL_DEPTH_TEST));
         Logger.LogInfo("GL_CULL_FACE: " + glIsEnabled(GL_CULL_FACE));
         Logger.LogInfo("GL_BLEND: " + glIsEnabled(GL_BLEND));
+
+        // Find graphics card
+        Logger.LogInfo("Graphics card: " + glGetString(GL_RENDERER));
 
         // Set up graphics
         try {
@@ -196,22 +199,14 @@ public class Window implements AutoCloseable {
 
     public void Loop() {
 
-        BufferedImage image = Utils.loadImage("debug.png");
-        int textureId = Utils.createTexture(image);
+        // BufferedImage image = Utils.loadImage("debug.png");
+        // int textureId = Utils.createTexture(image);
 
-        LabelSettings settings = new LabelSettings();
-        settings.size = 20;
-        settings.style = Font.MONOSPACED;
-        settings.type = Font.PLAIN;
-        settings.useAntiAliasing = false;
-
-        Text text = new Text("FPS: " + fps, settings);
-        Text title = new Text("Himawari DEBUG", settings);
-        
-        Text instructions1 = new Text("Press '1' to toggle wireframe", settings);
-        Text instructions2 = new Text("Press '2' to view normal map", settings);
-
-        Text[] debugMenu = {title, text, instructions1, instructions2};
+        // LabelSettings settings = new LabelSettings();
+        // settings.size = 20;
+        // settings.style = Font.MONOSPACED;
+        // settings.type = Font.PLAIN;
+        // settings.useAntiAliasing = false;
 
         while (!glfwWindowShouldClose(window)) {
 
@@ -232,20 +227,20 @@ public class Window implements AutoCloseable {
             renderer.Render();
 
             // Debug menu
-            if (Input.debugMenu) {
+            // if (Input.debugMenu) {
 
-                // Show fps
-                if (ticks % 60 == 0) 
-                    text.setText("FPS: " + (int)fps);
+            //     // Show fps
+            //     if (ticks % 60 == 0) 
+            //         text.setText("FPS: " + (int)fps);
 
-                for (int i = 0; i < debugMenu.length; i++) {
+            //     for (int i = 0; i < debugMenu.length; i++) {
 
-                    Text t = debugMenu[i];
+            //         Text t = debugMenu[i];
 
-                    // Draw text
-                    t.Render(new Vec2(5, i * 25), Color.RED);
-                }
-            }
+            //         // Draw text
+            //         t.Render(new Vec2(5, i * 25), Color.RED);
+            //     }
+            // }
 
             // Tick input
             Input.tick();

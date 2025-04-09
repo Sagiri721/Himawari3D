@@ -4,10 +4,11 @@
 [INFO] : GL_DEPTH_TEST: true
 [INFO] : GL_CULL_FACE: false
 [INFO] : GL_BLEND: true
+[INFO] : Graphics card: Intel(R) HD Graphics 530
 [INFO] : Renderer loaded: class com.himawari.Gfx.RendererGPU
-[INFO] : Vertex shader: shaders/vertex.glsl
-[INFO] : Fragment shader: shaders/fragment.glsl
+[INFO] : Vertex shader: shaders/vertex.vert
+[INFO] : Fragment shader: shaders/fragment.frag
 [INFO] : #### Execution finished ####
-[INFO] : Ticks: 73
-[INFO] : Simulation time: 1545ms
+[INFO] : Ticks: 7410
+[INFO] : Simulation time: 14886ms
 [INFO] : - Cleaning window

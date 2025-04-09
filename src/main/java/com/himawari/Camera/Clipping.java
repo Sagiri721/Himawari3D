@@ -50,20 +50,24 @@ public class Clipping {
         int nInsidePoints = 0, nOutsidePoints = 0;
 
         // The distance of every point in the original triangle to the given plane
-        Float[] originDistance = Arrays.stream(face.vertices).map(v -> Utils.DistanceToShortestPlanePoint(v, normal, plane)).toArray(Float[]::new);
+        // Float[] originDistance = Arrays.stream(face.vertices).map(v -> Utils.DistanceToShortestPlanePoint(v, normal, plane)).toArray(Float[]::new);
+        float[] originDistance = new float[3];
+        for (int i = 0; i < 3; i++) {
+            originDistance[i] = Utils.DistanceToShortestPlanePoint(face.get(i), normal, plane);
+        }
 
         for (int i = 0; i < originDistance.length; i++) {
             
             // Get the Float class value
-            float value = originDistance[i].floatValue();
+            float value = originDistance[i];
 
             // When distance is positive, the vertex is inside
             // When it is negative, it is outside
-            if(value >= 0) insidePoints[nInsidePoints++] = face.vertices[i];
-            else outsidePoints[nOutsidePoints++] = face.vertices[i];
+            if(value >= 0) insidePoints[nInsidePoints++] = face.get(i);
+            else outsidePoints[nOutsidePoints++] = face.get(i);
         }
 
-        if(nInsidePoints == 0){
+        if(nInsidePoints == 0) {
             // All points exist on the outside of the plane
             // Skip rendering
             return 0;

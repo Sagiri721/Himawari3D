@@ -66,8 +66,8 @@ public class Graphics {
         glBegin(GL_LINES);
         for (int i = 0; i < 3; i++) {
 
-            Vec2 normalizeCoordinates = Utils.screenSpaceToNormalizedCoordinates(triangle.vertices[i]);
-            Vec2 normalizeCoordinatesNext = Utils.screenSpaceToNormalizedCoordinates(triangle.vertices[(i + 1) % 3]);
+            Vec2 normalizeCoordinates = Utils.screenSpaceToNormalizedCoordinates(triangle.get(i));
+            Vec2 normalizeCoordinatesNext = Utils.screenSpaceToNormalizedCoordinates(triangle.get((i + 1) % 3));
 
             glVertex2f(normalizeCoordinates.x, normalizeCoordinates.y);
             glVertex2f(normalizeCoordinatesNext.x, normalizeCoordinatesNext.y);
@@ -84,9 +84,9 @@ public class Graphics {
         
         for (int i = 0; i < 3; i++) {
             
-            Vec2 normalizeCoordinates = Utils.screenSpaceToNormalizedCoordinates(triangle.vertices[i]);
+            Vec2 normalizeCoordinates = Utils.screenSpaceToNormalizedCoordinates(triangle.get(i));
 
-            float depth = ZBuffer.ProjectOntoToFace(triangle.get(0), triangle.get(1), triangle.get(2), new Vec3(triangle.vertices[0].x, triangle.vertices[0].y, 0)).z;
+            float depth = Utils.ProjectOntoToFace(triangle.get(0), triangle.get(1), triangle.get(2), new Vec3(triangle.get(0).x, triangle.get(0).y, 0)).z;
             glVertex3f(normalizeCoordinates.x, normalizeCoordinates.y, depth);
         }
 
@@ -105,10 +105,10 @@ public class Graphics {
             // Set color to white
             if (color.isPresent()) {
                 Color c = color.get();
-                glColor3ub(c.r, c.g, c.b);
+                glColor4ub(c.r, c.g, c.b, c.a);
             } else {
-                glColor3f(1, 1, 1);
             }
+            glColor3f(1, 1, 1);
 
             glTexCoord2f(0, 0); 
             glVertex2f(x, y);

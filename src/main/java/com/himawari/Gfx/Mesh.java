@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.himawari.HLA.Triangle;
 import com.himawari.HLA.Vec3;
 import com.himawari.Utils.Transform;
 import com.himawari.Utils.Utils;
@@ -20,45 +19,85 @@ public class Mesh {
     public Color base = Color.WHITE;
     public boolean lit = true;
     
-    public Vec3[] vertices;
-    public int[][] faces;
-    public Vec3[] normals;
+    public float[] vertices;
+    public short[][] faces;
 
     // Empty constructor
     public Mesh() {}
 
     public Mesh(List<Vec3> vertices, List<int[]> faces){
 
-        this.vertices = vertices.toArray(new Vec3[vertices.size()]);
-        this.faces = faces.toArray(new int[faces.size()][]);   
+        this.vertices = new float[vertices.size() * 3];
+        this.faces = new short[faces.size()][];
 
-        this.normals = calculateNormals();
+        for (int i = 0; i < vertices.size(); i++) {
+            this.vertices[i * 3] = vertices.get(i).x;
+            this.vertices[i * 3 + 1] = vertices.get(i).y;
+            this.vertices[i * 3 + 2] = vertices.get(i).z;
+        }
+
+        for (int i = 0; i < faces.size(); i++) {
+            this.faces[i] = new short[faces.get(i).length];
+            for (int j = 0; j < faces.get(i).length; j++) {
+                this.faces[i][j] = (short) faces.get(i)[j];
+            }
+        }
     }
 
     public Mesh(Vec3[] vertices, int[][] faces){
 
-        this.vertices = vertices;
-        this.faces = faces;
+        this.vertices = new float[vertices.length * 3];
+        this.faces = new short[faces.length][];
 
-        this.normals = calculateNormals();
-    }
-
-    public Vec3[] calculateNormals(){
-
-        normals = new Vec3[faces.length];
-
-        for (int i = 0; i < faces.length; i++) {
-            
-            Vec3 a = vertices[faces[i][0]];
-            Vec3 b = vertices[faces[i][1]];
-            Vec3 c = vertices[faces[i][2]];
-
-            Triangle triangle = new Triangle(a, b, c);
-            normals[i] = Utils.CalculateFaceNormal(triangle);
+        for (int i = 0; i < vertices.length; i++) {
+            this.vertices[i * 3] = vertices[i].x;
+            this.vertices[i * 3 + 1] = vertices[i].y;
+            this.vertices[i * 3 + 2] = vertices[i].z;
         }
 
-        return normals;
+        for (int i = 0; i < faces.length; i++) {
+            this.faces[i] = new short[faces[i].length];
+            for (int j = 0; j < faces[i].length; j++) {
+                this.faces[i][j] = (short) faces[i][j];
+            }
+        }
     }
+
+    private void fillArraysWithData(List<Vec3> vertices, List<int[]> faces){
+
+        this.vertices = new float[vertices.size() * 3];
+        this.faces = new short[faces.size()][];
+
+        for (int i = 0; i < vertices.size(); i++) {
+            this.vertices[i * 3] = vertices.get(i).x;
+            this.vertices[i * 3 + 1] = vertices.get(i).y;
+            this.vertices[i * 3 + 2] = vertices.get(i).z;
+        }
+
+        for (int i = 0; i < faces.size(); i++) {
+            this.faces[i] = new short[faces.get(i).length];
+            for (int j = 0; j < faces.get(i).length; j++) {
+                this.faces[i][j] = (short) faces.get(i)[j];
+            }
+        }
+    }
+
+    // public Vec3[] calculateNormals(){
+
+    //     normals = new Vec3[faces.length];
+
+    //     for (int i = 0; i < faces.length; i++) {
+            
+    //         Vec3 a = vertices[faces[i][0]];
+    //         Vec3 b = vertices[faces[i][1]];
+    //         Vec3 c = vertices[faces[i][2]];
+
+    //         Triangle triangle = new Triangle(a, b, c);
+    //         normals[i] = Utils.CalculateFaceNormal(triangle);
+    //     }
+
+    //     return normals;
+    // }
 
     // Load mesh from .obj file
     public static Mesh LoadFrom(String filename){
@@ -106,14 +145,11 @@ public class Mesh {
 
             // Initialize mesh
             Mesh mesh = new Mesh();
-            mesh.vertices = vertices.toArray(new Vec3[vertices.size()]);
+            mesh.vertices = new float[vertices.size() * 3];
+            mesh.faces = new short[faces.size()][];
             
-            // Transform list of arrays to matrix
-            mesh.faces = new int[faces.size()][];
-            mesh.faces = faces.toArray(mesh.faces);
-
-            // Issue normal calculations
-            mesh.normals = mesh.calculateNormals();
+            // Fill the vertices array
+            mesh.fillArraysWithData(vertices, faces);
 
             return mesh;
 

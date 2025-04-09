@@ -1,11 +1,10 @@
 package com.himawari.HLA;
 
 import com.himawari.Gfx.Color;
-import com.himawari.Gfx.ZBuffer;
 import com.himawari.Utils.Utils;
 
 public class Triangle {
-
+ 
     // Triangle vertices
     public Vec3[] vertices = new Vec3[3];
     public Color col = Color.WHITE;
@@ -49,7 +48,7 @@ public class Triangle {
     public float depth(int i) {
 
         Vec2 screenPos = new Vec2(vertices[i].x, vertices[i].y);
-        float depth = ZBuffer.ProjectOntoToFace(vertices[0], vertices[1], vertices[2], new Vec3(screenPos)).z;
+        float depth = Utils.ProjectOntoToFace(vertices[0], vertices[1], vertices[2], new Vec3(screenPos)).z;
         return depth;
     }
 

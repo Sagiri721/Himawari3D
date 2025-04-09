@@ -19,8 +19,8 @@ import com.himawari.Utils.Utils;
 
 public class RendererGPU extends RenderEnvironment implements IRenderer {
 
-    private static final String VERTEX_PATH = "shaders/vertex.glsl";
-    private static final String FRAGMENT_PATH = "shaders/fragment.glsl"; 
+    private static final String VERTEX_PATH = "shaders/vertex.vert";
+    private static final String FRAGMENT_PATH = "shaders/fragment.frag"; 
 
     private final Batch batchRenderer = new Batch();
     private int shaderProgram;
@@ -48,6 +48,9 @@ public class RendererGPU extends RenderEnvironment implements IRenderer {
 
             GL30.glUniform2f(uniScreenSize, screenSize.x, screenSize.y);
 
+            // Begin batch renderer
+            batchRenderer.begin(1000);
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -64,53 +67,57 @@ public class RendererGPU extends RenderEnvironment implements IRenderer {
 
         // Loop through stored meshes and draw each of them
         for (Mesh mesh : getRenderQueue()) {
-            batchRenderer.begin(mesh.vertices.length);
 
             // Bach render each mesh
 
             // Before buffering the renderer
             // Treat and cache the vertices after all projection operations
-            Vec3[] trianglePool = ProjectVerticesFromMesh(mesh);
+            float[] trianglePool = ProjectVerticesFromMesh(mesh);
 
             // Buffer rendering
             // For each face of the mesh draw it's triangles
             BufferFaceTriangles(trianglePool, mesh);
 
-            // Flush any remaining vertices before end of bvatch
+            // Flush any remaining vertices before rendering mesh
             batchRenderer.flush();
-            batchRenderer.end();
         }
     }
 
     // Efectuate the rotation of the points in 3D space
     // Normals are a reference to the normals array list that is used later
     // Normals need to be calculated from the raw vertex data
-    private static Vec3[] ProjectVerticesFromMesh(Mesh mesh){
+    private static float[] ProjectVerticesFromMesh(Mesh mesh){
 
-        Vec3[] trianglePool = new Vec3[mesh.vertices.length];
-        int index = 0;
+        float[] trianglePool = new float[mesh.vertices.length];
+        float[] tempVertex = new float[3];
 
-        for (Vec3 vertex : mesh.vertices) {
+        for (int i = 0; i < mesh.vertices.length; i+=3) {
 
             // Copy the current value
-            trianglePool[index] = vertex.copy();
+            tempVertex[0] = mesh.vertices[i];
+            tempVertex[1] = mesh.vertices[i + 1];
+            tempVertex[2] = mesh.vertices[i + 2];
 
-            // Apply rotations
             // Apply rotations
             Projection.ProjectRotationMatricesToAngle(mesh.transform.getRotation());
-            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.rotationX, false);
-            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.rotationZ, false);
-            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.rotationY, false);
+
+            Utils.TransformVectorInPlace(tempVertex, Projection.rotationX);
+            Utils.TransformVectorInPlace(tempVertex, Projection.rotationZ);
+            Utils.TransformVectorInPlace(tempVertex, Projection.rotationY);
             
             // Apply local transformations
-            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.MakeScale(mesh.transform.scale), false);
-            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.MakeTranslation(mesh.transform.position), false);
+            Utils.TransformVectorInPlace(tempVertex, Projection.MakeScale(mesh.transform.scale));
+            Utils.TransformVectorInPlace(tempVertex, Projection.MakeTranslation(mesh.transform.position));
 
-            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.cameraView, false);
+            // Update mesh normals
+            Utils.TransformVectorInPlace(tempVertex, Projection.cameraView);
 
-            index++;
+            // Copy the transformed vertex to the triangle pool
+            trianglePool[i] = tempVertex[0];
+            trianglePool[i + 1] = tempVertex[1];
+            trianglePool[i + 2] = tempVertex[2];
         }
-
+        
         return trianglePool;
     }
 
@@ -142,49 +149,40 @@ public class RendererGPU extends RenderEnvironment implements IRenderer {
     }
 
     // Unlink the faces and buffer the rendering of the faces
-    private void BufferFaceTriangles(Vec3[] vertices, Mesh mesh){
+    private void BufferFaceTriangles(float[] vertices, Mesh mesh){
 
-        int[][] faces = mesh.faces;
-        for (int i = 0; i < faces.length; i++) {
+        Triangle projTri = null;
+        Vec3 projNormal = null, cameraRay = null;
+
+        for (int i = 0; i < mesh.faces.length; i++) {
             
             // 3D points that compose the trinagle face unlinked
             // Efectuate the projection
-            Triangle projTri = UnlinkTriangleFaceVertices(faces[i], vertices);
+            projTri = UnlinkTriangleFaceVertices(mesh.faces[i], vertices);
 
             // Visibility is dependant on normal calculations
             // Get this face's current normal
-            Vec3 realNormal = mesh.normals[i];
-            Vec3 projNormal = Utils.CalculateFaceNormal(projTri);
+            projNormal = Utils.CalculateFaceNormal(projTri);
             
             // Backface culling
             // Skip projection and drawing  
-            Vec3 cameraRay = (projTri.get(0).copy().sum(Camera.lookDirection.copy()));
-            float visionAngleDifference = Utils.RadiansToEuler(Vec3.getAngle(projNormal, cameraRay));
-            if (visionAngleDifference <= 90) {
+            cameraRay = (projTri.get(0).copy().sum(Camera.lookDirection.copy()));
+            if (Utils.RadiansToEuler(Vec3.getAngle(projNormal, cameraRay)) <= 90) {
                 // The surface is facing away from the camera, so continue processing the next faces
                 continue;
             }
 
-            // Calculate lighting conditions from normal
-            Vec3 lightDirection = new Vec3(0, 0, -1).normalized(); 
-            float lightProduct = Vec3.DotProduct(projNormal, lightDirection);
-            lightProduct = Math.max(0, lightProduct); 
-
-            Color lightShade;
+            Color base = mesh.base;
 
             if (getRenderTarget() == RenderTarget.NORMALMAP) {
-                // Map normal to color
-                lightShade = new Color(
+                
+                Vec3 realNormal = projNormal;
+                base = new Color(
                     (int) Math.abs(realNormal.x * 255),
                     (int) Math.abs(realNormal.y * 255),
                     (int) Math.abs(realNormal.z * 255),
                     255
                 );
-            }else {    
-
-                lightShade = (mesh.lit && getRenderMode() == RenderMode.SOLID) ? 
-                    Color.getLuminanceVariation(mesh.base, lightProduct) : 
-                    mesh.base;
             }
 
             // Apply triangle clipping against near plane
@@ -197,15 +195,14 @@ public class RendererGPU extends RenderEnvironment implements IRenderer {
 
                 // Draw all the properly spli troiangles yo fit the screen
                 for (Triangle screenSplitTriangle : Clipping.ClipTrianglesToScreen(triangleToRaster)) {
-                    
+
                     // Buffer the face triangle
                     switch (getRenderMode()) {
                         case WIREFRAME:
-                            Graphics.DrawTriangle(screenSplitTriangle, lightShade);
+                            Graphics.DrawTriangle(screenSplitTriangle, base);
                         break;
                         case SOLID:
-                            //Graphics.FillTriangle(screenSplitTriangle, lightShade);
-                            batchRenderer.batch(screenSplitTriangle, lightShade);
+                            batchRenderer.batch(screenSplitTriangle, base, projNormal);
                             break;
                     }
                 }
@@ -215,13 +212,32 @@ public class RendererGPU extends RenderEnvironment implements IRenderer {
     }
 
     // From the face vertex links, turn them to the cached vertex triangles
-    private static Triangle UnlinkTriangleFaceVertices(int[] linkedface, Vec3[] vertices){
-        return new Triangle(vertices[(int) linkedface[0]], vertices[(int) linkedface[1]], vertices[(int) linkedface[2]]);
+    private static Triangle UnlinkTriangleFaceVertices(short[] linkedFace, float[] vertices) {
+        Vec3 v1 = new Vec3(
+            vertices[linkedFace[0] * 3], 
+            vertices[linkedFace[0] * 3 + 1], 
+            vertices[linkedFace[0] * 3 + 2] 
+        );
+        
+        Vec3 v2 = new Vec3(
+            vertices[linkedFace[1] * 3],
+            vertices[linkedFace[1] * 3 + 1],
+            vertices[linkedFace[1] * 3 + 2]
+        );
+        
+        Vec3 v3 = new Vec3(
+            vertices[linkedFace[2] * 3],
+            vertices[linkedFace[2] * 3 + 1],
+            vertices[linkedFace[2] * 3 + 2]
+        );
+        
+        return new Triangle(v1, v2, v3);
     }
 
     @Override
     public void Dispose() {
 
+        batchRenderer.end();
         batchRenderer.dispose();
         GL30.glDeleteShader(shaderProgram);
     }

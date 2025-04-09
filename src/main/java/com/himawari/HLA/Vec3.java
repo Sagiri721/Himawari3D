@@ -123,7 +123,6 @@ public class Vec3 implements Comparable<Vec3> {
     }
 
     public Vec3 normalized(){
-
         return this.divide(Vec3.from(this.magnitude()));
     }
 
