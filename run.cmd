@@ -1,1 +1,1 @@
-mvn exec:java -Dexec.mainClass="com.himawari.Main"
+mvn exec:java -Dexec.mainClass="com.himawari.Main" 

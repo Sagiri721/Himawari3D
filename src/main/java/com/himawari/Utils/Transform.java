@@ -23,4 +23,12 @@ public class Transform {
     public Vec3 getRotation(){
         return rotation;
     }
+
+    public Transform clone(){
+        Transform t = new Transform();
+        t.scale = this.scale.copy();
+        t.rotation = this.rotation.copy();
+        t.position = this.position.copy();
+        return t;
+    }
 }

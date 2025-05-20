@@ -94,35 +94,40 @@ public class Graphics {
 
         // BackBuffer.FillBufferTriangle(triangle.get(0), triangle.get(1), triangle.get(2), color);
     }
-
     public static void RenderTexture(int textureID, float x, float y, float width, float height, Optional<Color> color) {
-
+        
+        // Enable blending for transparency
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        
         glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, textureID);
         
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+        
         glBegin(GL_QUADS);
-
-            // Set color to white
+            // Set color (default to white if not provided)
             if (color.isPresent()) {
                 Color c = color.get();
                 glColor4ub(c.r, c.g, c.b, c.a);
             } else {
+                glColor4ub((byte)255, (byte)255, (byte)255, (byte)255);
             }
-            glColor3f(1, 1, 1);
-
+    
             glTexCoord2f(0, 0); 
             glVertex2f(x, y);
-
+    
             glTexCoord2f(1, 0); 
             glVertex2f(x + width, y);
-
+    
             glTexCoord2f(1, 1); 
             glVertex2f(x + width, y + height);
-
+    
             glTexCoord2f(0, 1); 
             glVertex2f(x, y + height);
         glEnd();
         
         glDisable(GL_TEXTURE_2D);
+        glDisable(GL_BLEND);
     }
 }

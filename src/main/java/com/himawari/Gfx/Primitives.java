@@ -1,5 +1,6 @@
 package com.himawari.Gfx;
 
+import com.himawari.HLA.Vec2;
 import com.himawari.HLA.Vec3;
 
 /**
@@ -36,5 +37,22 @@ public class Primitives {
     // Return a basic cube mesh
     public static Mesh Cube(){
         return new Mesh(CUBE_VERTICES, CUBE_FACES);
+    }
+
+    public static Mesh Plane(Vec2 dimensions){
+
+        Vec3[] vertices = new Vec3[]{
+            new Vec3(-dimensions.x, 0, -dimensions.y),
+            new Vec3(-dimensions.x, 0, dimensions.y),
+            new Vec3(dimensions.x, 0, dimensions.y),
+            new Vec3(dimensions.x, 0, -dimensions.y)
+        };
+
+        int[][] faces = new int[][]{
+            {0, 1, 2},
+            {0, 2, 3}
+        };
+
+        return new Mesh(vertices, faces);
     }
 }

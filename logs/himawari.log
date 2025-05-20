@@ -8,7 +8,7 @@
 [INFO] : Renderer loaded: class com.himawari.Gfx.RendererGPU
 [INFO] : Vertex shader: shaders/vertex.vert
 [INFO] : Fragment shader: shaders/fragment.frag
-[INFO] : #### Execution finished ####
-[INFO] : Ticks: 7410
-[INFO] : Simulation time: 14886ms
-[INFO] : - Cleaning window
+[INFO] : Loading simulation data from D:\TIAGO\school\iseppers\pi4\shodrone.simulator\recordings\recording_1521031101.yaml and D:\TIAGO\school\iseppers\pi4\shodrone.simulator\recordings\recording_step_1521031101.csv
+[ERROR] : Step index out of bounds
+[ERROR] : Step index out of bounds
+[ERROR] : Step index out of bounds

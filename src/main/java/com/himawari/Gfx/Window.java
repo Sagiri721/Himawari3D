@@ -1,15 +1,16 @@
 package com.himawari.Gfx;
 
+import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 
-import com.himawari.HLA.Vec2;
+import com.himawari.GUI.GuiApp;
 import com.himawari.Input.Input;
+import com.himawari.Input.InputListener;
 import com.himawari.Utils.LabelSettings;
 import com.himawari.Utils.Logger;
 import com.himawari.Utils.RenderEnvironment;
-import com.himawari.Utils.Utils;
 import com.himawari.Utils.WindowConfig;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
@@ -17,22 +18,21 @@ import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
-import java.awt.Font;
-import java.awt.image.BufferedImage;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-
+import java.awt.Font;
 public class Window implements AutoCloseable {
 
     private static Window instance;
     private IRenderer renderer;
+    private GuiApp gui;
 
     public static Window getInstance(){
         return instance;
     }
 
     // Window handle
-    private long window;
+    public long window;
 
     // Window ar
     public float aspectRatio;
@@ -62,7 +62,7 @@ public class Window implements AutoCloseable {
 
     @Override
     public void close(){
-        
+
         long simulationTime = System.currentTimeMillis() - startTime;
 
         Logger.LogInfo("#### Execution finished ####");
@@ -107,13 +107,20 @@ public class Window implements AutoCloseable {
 
         // Setup a key callback
         // This will be called everytime a key is pressed
-        glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
+                // Register the key callback
+        GLFW.glfwSetKeyCallback(Window.getInstance().window, (window, key, scancode, action, mods) -> {
+            
             if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE)
-                glfwSetWindowShouldClose(window, true);
+                GLFW.glfwSetWindowShouldClose(window, true);
 
             Input.keyCallback(key, action);
         });
-        
+
+        // Register the mouse button callback
+        GLFW.glfwSetMouseButtonCallback(Window.getInstance().window, (window, button, action, mods) -> {
+            Input.mouseCallback(button, action);
+        });
+
         // Set up GL context
         glfwMakeContextCurrent(window);
         glfwShowWindow(window);
@@ -195,18 +202,18 @@ public class Window implements AutoCloseable {
         lastFrame = System.currentTimeMillis();
 
         startTime = System.currentTimeMillis();
+
+        LabelSettings settings = new LabelSettings();
+        settings.size = 20;
+        settings.style = Font.MONOSPACED;
+        settings.type = Font.PLAIN;
+        settings.useAntiAliasing = false;
     }
 
     public void Loop() {
 
         // BufferedImage image = Utils.loadImage("debug.png");
         // int textureId = Utils.createTexture(image);
-
-        // LabelSettings settings = new LabelSettings();
-        // settings.size = 20;
-        // settings.style = Font.MONOSPACED;
-        // settings.type = Font.PLAIN;
-        // settings.useAntiAliasing = false;
 
         while (!glfwWindowShouldClose(window)) {
 
@@ -238,10 +245,10 @@ public class Window implements AutoCloseable {
             //         Text t = debugMenu[i];
 
             //         // Draw text
-            //         t.Render(new Vec2(5, i * 25), Color.RED);
             //     }
             // }
-
+            
+            
             // Tick input
             Input.tick();
 

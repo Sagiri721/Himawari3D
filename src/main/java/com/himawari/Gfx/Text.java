@@ -83,17 +83,18 @@ public class Text implements AutoCloseable {
 
     private void UpdateImageDimensions() {
 
-        int width = 0, height = 0;
+        BufferedImage temp = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = temp.createGraphics();
 
-        for (int i = 0; i < text.length(); i++) {
-            
-            char c = text.charAt(i);
-            BufferedImage charImage = Utils.CreateCharImage(font, c);
-
-            width += charImage.getWidth();
-            height = Math.max(height, charImage.getHeight());
+        if (settings.useAntiAliasing) {
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         }
-
+        g.setFont(font);
+        int width = g.getFontMetrics().stringWidth(text);
+        int height = g.getFontMetrics().getHeight();
+        g.dispose();
+        
         imageDimensions = new Vec2(width, height);
         MakeImage();
     }
@@ -112,8 +113,15 @@ public class Text implements AutoCloseable {
         }
 
         // Draw text
+        // Clear with transparent
+        g.setComposite(AlphaComposite.Clear);
+        g.fillRect(0, 0, texture.getWidth(), texture.getHeight());
+        
+        // Draw text
+        g.setComposite(AlphaComposite.SrcOver);
         g.setFont(font);
-        g.drawString(text, 0, font.getSize());
+        g.setColor(java.awt.Color.WHITE);
+        g.drawString(text, 0, g.getFontMetrics().getAscent());
 
         g.dispose();
 

@@ -22,8 +22,8 @@ struct PointLight {
 };
 
 // Scene casters
-DirectionalLight lightDir = DirectionalLight(vec3(0.2, 0.3, 1.0), 0.3);
-PointLight lights[1] = {PointLight(vec3(0,0,1), 1, 1.0, 1.0, 1.8)};
+DirectionalLight lightDir = DirectionalLight(vec3(0.2, 0.3, 1.0), 0.8);
+PointLight lights[1] = PointLight[](PointLight(vec3(0,0,1), 1, 1.0, 1.0, 1.8));
 float ambientLighting = 0.2;
 
 float calculateAttenuation(PointLight light, float distance) {
@@ -52,15 +52,15 @@ void main()
         float diffuse = max(dot(normal, lightDirection), 0.0);
 
         // ######################### Point lighting
-        PointLight pl = lights[0];
-        vec3 to_light = pl.position - vertexPos;
-        float distance = length(to_light);
+        // PointLight pl = lights[0];
+        // vec3 to_light = pl.position - vertexPos;
+        // float distance = length(to_light);
 
-        float attenuation = calculateAttenuation(lights[0], distance);
+        // float attenuation = calculateAttenuation(lights[0], distance);
 
         // ######################### Final light calculation
         // Add ambient lighting to prevent complete darkness
-        float lighting = attenuation * (ambientLighting + (diffuse * lightDir.intensity));
+        float lighting = /*attenuation * */(ambientLighting + (diffuse * lightDir.intensity));
 
         finalColor = vertexColor * lighting;
             

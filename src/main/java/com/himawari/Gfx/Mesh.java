@@ -169,4 +169,19 @@ public class Mesh {
                 map[2].floatValue()
             );
     }
+
+    public Mesh clone() {
+        
+        Mesh clone = new Mesh();
+        clone.vertices = Arrays.copyOf(this.vertices, this.vertices.length);
+        clone.faces = new short[this.faces.length][];
+        for (int i = 0; i < this.faces.length; i++) {
+            clone.faces[i] = Arrays.copyOf(this.faces[i], this.faces[i].length);
+        }
+
+        clone.transform = this.transform.clone();
+        clone.base = this.base;
+        clone.lit = this.lit;
+        return clone;
+    }
 }
