@@ -29,10 +29,11 @@ public class Main {
         //GuiApp.launch(new GuiApp());
 
         Window myWindow = new Window(new WindowConfig(true));
-        File head = new File("D:\\TIAGO\\school\\iseppers\\pi4\\shodrone.simulator\\recordings\\recording_1521031101.yaml");
-        File step = new File("D:\\TIAGO\\school\\iseppers\\pi4\\shodrone.simulator\\recordings\\recording_step_1521031101.csv");
+        File head = new File("D:\\TIAGO\\school\\iseppers\\pi4\\shodrone.simulator\\recordings\\recording_483683674.yaml");
+        File step = new File("D:\\TIAGO\\school\\iseppers\\pi4\\shodrone.simulator\\recordings\\recording_step_483683674.csv");
 
         SimulationController sim = new SimulationController(head, step);
+        Window.hookListener(sim);
 
         Input.hookListener(new CameraInput());
         Input.hookListener(new SimulationKeyListener(sim));

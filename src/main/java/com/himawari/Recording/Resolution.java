@@ -1,10 +1,9 @@
 package com.himawari.Recording;
 
+import com.himawari.Gfx.Window;
 import com.himawari.HLA.Vec2;
 
 public class Resolution {
-
-    public static Resolution NATIVE_RES = new Resolution();
 
     public Vec2 resolution = new Vec2(0, 0);
     public boolean isNative = false;
@@ -12,6 +11,8 @@ public class Resolution {
 
     private Resolution(){
         isNative = true;
+        resolution.x = Window.getInstance().config().width;
+        resolution.y = Window.getInstance().config().height;
     }
 
     public Resolution(int width, int height){
@@ -26,5 +27,9 @@ public class Resolution {
         resolution.y = (int)(width * aspectRatio);
 
         this.aspectRatio = aspectRatio;
+    }
+
+    public static Resolution getNativeResolution(){
+        return new Resolution();
     }
 }

@@ -1,5 +1,7 @@
 package com.himawari.HLA;
 
+import com.himawari.Utils.Utils;
+
 public class Vec3 implements Comparable<Vec3> {
 
     public static final Vec3 ZERO = new Vec3(0,0,0);
@@ -167,5 +169,21 @@ public class Vec3 implements Comparable<Vec3> {
     public static float getAngle(Vec3 from, Vec3 to){
 
         return (float) Math.acos(DotProduct(from, to) / (from.magnitude() * to.magnitude()));
+    }
+
+    public Vec3 multiplyByScalar(float scalar) {
+        return new Vec3(
+            x * scalar,
+            y * scalar,
+            z * scalar
+        );
+    }
+
+    public static Vec3 lerp(Vec3 position, Vec3 position2, float t) {
+
+        Vec3 A = position.multiplyByScalar(t);
+        Vec3 B = position2.multiplyByScalar(1.f - t);
+
+        return A.copy().sum(B).copy();
     }
 }

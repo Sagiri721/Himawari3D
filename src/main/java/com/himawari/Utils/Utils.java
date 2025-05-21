@@ -377,4 +377,9 @@ public class Utils {
         point.z = ProjectOntoFaceScalar(triangle, point.x, point.y);
         return point;
     }
+
+    public static double Lerp(float a, float b, float t) {
+        System.out.println(t);
+        return a + t * (b - a);
+    }
 }

@@ -1,5 +1,6 @@
 package com.himawari.Simulation;
 
+import com.himawari.Input.Input;
 import com.himawari.Input.InputListener;
 import com.himawari.Input.KeyConstants;
 
@@ -23,7 +24,20 @@ public class SimulationKeyListener implements InputListener {
     public void onKeyPressed(int key) {
 
         if (key == KeyConstants.ENTER_OFFSET) {
-            this.simulationController.step(1);
+
+            if (Input.isKeyDown(KeyConstants.LEFT_SHIFT_OFFSET)){
+
+                this.simulationController.playDir *= -1;
+                return;
+            }
+
+            this.simulationController.playing = !this.simulationController.playing;
+
+            if (this.simulationController.playing) {
+                this.simulationController.recorder.startRecording();
+            } else {
+                this.simulationController.recorder.stopRecording();
+            }
         }
     }
 

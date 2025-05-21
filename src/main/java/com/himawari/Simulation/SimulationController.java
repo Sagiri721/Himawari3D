@@ -1,20 +1,27 @@
 package com.himawari.Simulation;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.Random;
 
 import com.himawari.Gfx.Mesh;
 import com.himawari.Gfx.Window;
+import com.himawari.HLA.Vec2;
 import com.himawari.HLA.Vec3;
+import com.himawari.Recording.Recorder;
+import com.himawari.Recording.Resolution;
 import com.himawari.Utils.CVSReader;
 import com.himawari.Utils.Logger;
+import com.himawari.Utils.PipelineListener;
+import com.himawari.Utils.Utils;
 import com.himawari.Utils.YAMLReader;
 
 /**
  * SimulationController is responsible for managing a visualization of a certain simulation.
  * Simulation data is defined from a specific format, a YAML header and a csv step indexed position matrix.
  */
-public class SimulationController {
+public class SimulationController implements PipelineListener {
     
     /**
      * StepData is a class that holds the data for each step in the simulation.
@@ -38,7 +45,13 @@ public class SimulationController {
     private HashMap<String, String> simulationHead;
     private HashMap<String, Mesh> simulationObjects;
     private StepData[] steps;
-    private int currentStep = 0;
+    private float currentStep = 0;
+
+    public boolean playing = false;
+    private float playbackSpeed = 1f;
+    public int playDir = 1;
+
+    public Recorder recorder = null;
 
     public SimulationController(File header, File stepData){
 
@@ -65,6 +78,11 @@ public class SimulationController {
         }
 
         createObjects(Mesh.LoadFrom("models/cube.obj"));
+
+        Resolution resolution = Resolution.getNativeResolution();
+        //resolution.resolution.divide(new Vec2(2, 2)); // Reduce resolution for recording
+
+        recorder = new Recorder(24, true, "recording_", resolution);
     }
 
     int objectCount = 0;
@@ -94,6 +112,7 @@ public class SimulationController {
             Mesh object = model.clone();
             object.transform.position = steps[i].position;
             object.transform.scale = new Vec3(0.5f, 0.5f, 0.5f);
+            object.base = Utils.randomColor(new Random(System.nanoTime()).nextLong());
 
             Window.getInstance().currentRenderEnvironment().AddMesh(object);
 
@@ -101,9 +120,11 @@ public class SimulationController {
         }
     }
 
-    private void renderStep(int stepIndex) {
+    private void renderStep() {
 
-        int headIndex = objectCount * stepIndex + 1;
+        int headIndex = objectCount * (int) Math.floor(this.currentStep);
+        int prevHeadIndex = objectCount * (int) Math.floor(this.currentStep - 1);
+
         if (headIndex >= steps.length) {
             Logger.LogError("Step index out of bounds");
             return;
@@ -117,17 +138,33 @@ public class SimulationController {
             }
 
             StepData step = steps[headIndex + i];
+            StepData prevStep =  null;
+            
+            if (prevHeadIndex >= 0)
+                prevStep = steps[prevHeadIndex + i];
+
             Mesh object = simulationObjects.get(step.droneId);
 
             if (object != null) {
-                object.transform.position = step.position;
+
+                if (prevStep != null) {
+
+                    float t = currentStep - (int) Math.floor(this.currentStep);
+                    Vec3 lint = Vec3.lerp(step.position, prevStep.position, t);
+                    object.transform.position = lint;
+
+                } else {
+
+                    object.transform.position = step.position;
+                }
+
             } else {
                 Logger.LogError("Object not found for drone ID: " + step.droneId);
             }
         }
     }
 
-    public void step(int size) {
+    public void step(float size) {
 
         if (currentStep + size >= steps.length || currentStep + size < 0) {
             Logger.LogError("Step index out of bounds");
@@ -135,6 +172,32 @@ public class SimulationController {
         }
 
         currentStep += size;
-        renderStep(currentStep);
+        renderStep();
+    }
+
+    @Override
+    public void init() {
+    }
+
+    @Override
+    public void cleanUP() {
+    }
+
+    @Override
+    public void update() {
+
+        if (playing) {
+
+            double delta = Window.getInstance().frameDelta;
+            float nextStep = (float) (playbackSpeed * delta) * playDir;
+            
+            step(nextStep);
+
+            try {
+                recorder.tickRecording();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

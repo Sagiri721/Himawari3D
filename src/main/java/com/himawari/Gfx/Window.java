@@ -8,8 +8,10 @@ import org.lwjgl.opengl.GL;
 import com.himawari.GUI.GuiApp;
 import com.himawari.Input.Input;
 import com.himawari.Input.InputListener;
+import com.himawari.Recording.Recorder;
 import com.himawari.Utils.LabelSettings;
 import com.himawari.Utils.Logger;
+import com.himawari.Utils.PipelineListener;
 import com.himawari.Utils.RenderEnvironment;
 import com.himawari.Utils.WindowConfig;
 
@@ -20,12 +22,12 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.awt.Font;
 public class Window implements AutoCloseable {
 
     private static Window instance;
     private IRenderer renderer;
-    private GuiApp gui;
 
     public static Window getInstance(){
         return instance;
@@ -37,11 +39,22 @@ public class Window implements AutoCloseable {
     // Window ar
     public float aspectRatio;
 
+    // Listeners to window effects
+    private static final CopyOnWriteArrayList<PipelineListener> listeners = new CopyOnWriteArrayList<PipelineListener>();
+
     // Tick tracking
     public long ticks, lastFrame, elapsedTime, startTime;
     public double fps, frameDelta;
 
     private final WindowConfig config;
+
+    public static void hookListener(PipelineListener listener) {
+        listeners.add(listener);
+    }
+
+    public static void unhookListener(PipelineListener listener) {
+        listeners.remove(listener);
+    }
 
     public Window(WindowConfig config) {
 
@@ -203,6 +216,9 @@ public class Window implements AutoCloseable {
 
         startTime = System.currentTimeMillis();
 
+        for (PipelineListener listener : listeners) 
+            listener.init();
+
         LabelSettings settings = new LabelSettings();
         settings.size = 20;
         settings.style = Font.MONOSPACED;
@@ -233,6 +249,9 @@ public class Window implements AutoCloseable {
             // Render the scene
             renderer.Render();
 
+            for ( PipelineListener listener : listeners) 
+                listener.update();
+
             // Debug menu
             // if (Input.debugMenu) {
 
@@ -255,6 +274,9 @@ public class Window implements AutoCloseable {
             glfwSwapBuffers(window); 
             glfwPollEvents();
         }
+
+        for (PipelineListener listener : listeners) 
+            listener.cleanUP();
     }
 
     public WindowConfig config() {
