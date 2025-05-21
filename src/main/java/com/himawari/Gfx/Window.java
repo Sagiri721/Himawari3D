@@ -39,7 +39,7 @@ public class Window implements AutoCloseable {
     // Window ar
     public float aspectRatio;
 
-    // Listeners to window effects
+    // Listeners to window events
     private static final CopyOnWriteArrayList<PipelineListener> listeners = new CopyOnWriteArrayList<PipelineListener>();
 
     // Tick tracking

@@ -13,6 +13,8 @@ public class Resolution {
         isNative = true;
         resolution.x = Window.getInstance().config().width;
         resolution.y = Window.getInstance().config().height;
+
+        aspectRatio = resolution.x / resolution.y;
     }
 
     public Resolution(int width, int height){

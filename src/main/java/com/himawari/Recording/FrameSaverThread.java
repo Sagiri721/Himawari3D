@@ -77,6 +77,7 @@ public class FrameSaverThread extends Thread {
             }
         }
 
+        // flush
         while (!frameQueue.isEmpty()) {
             try {
                     

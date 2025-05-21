@@ -4,19 +4,15 @@ import static org.lwjgl.opengl.GL11.GL_BYTE;
 import static org.lwjgl.opengl.GL11.GL_RGB;
 import static org.lwjgl.opengl.GL11.glReadPixels;
 
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-
-import javax.imageio.ImageIO;
 
 import org.lwjgl.BufferUtils;
 public class Recorder {
     
     private int framerate = 10, frameIndex = 0;
     private boolean recording = false;
-    private String prefix;
 
     private Resolution recordResolution;
     
@@ -28,15 +24,18 @@ public class Recorder {
     private long lastCapture = 0;
     private long captureInterval = 1000 / framerate;
 
-    public Recorder(int framerate, boolean clearRecorderFolder, String prefix, Resolution resolution) {
+    public Recorder(int framerate, boolean clearRecorderFolder, Resolution resolution) {
 
         recording = false;
         this.framerate = framerate;
         this.captureInterval = 1000 / framerate;
 
+        if (!getRecordingFolder().exists())
+            getRecordingFolder().mkdir();
+
         if(clearRecorderFolder){
             
-            File folder = new File("outputs");
+            File folder = getRecordingFolder();
 
             if (!folder.exists()) 
                 folder.mkdir();
@@ -47,8 +46,6 @@ public class Recorder {
         }
 
         recordResolution = resolution;
-        this.prefix = prefix;
-
         targetBuffer = BufferUtils.createByteBuffer((int) (recordResolution.resolution.x * recordResolution.resolution.y * 3));
     }
 
@@ -85,7 +82,6 @@ public class Recorder {
 
         int width = (int) recordResolution.resolution.x;
         int height = (int) recordResolution.resolution.y;
-        
         
         glReadPixels(0, 0, width, height, GL_RGB, GL_BYTE, targetBuffer);
 

@@ -34,7 +34,7 @@ public class RenderEnvironment {
         return renderQueue;
     }
 
-    public void AddMesh(Mesh mesh){
+    public void addMesh(Mesh mesh){
         renderQueue.add(mesh);
     }
 

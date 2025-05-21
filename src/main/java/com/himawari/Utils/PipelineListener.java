@@ -8,7 +8,7 @@ public interface PipelineListener {
     void init();
 
     /**
-     * Called when the pipeline is stopped.
+     * Called when the pipeline is finished.
      */
     void cleanUP();
 

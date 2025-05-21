@@ -310,7 +310,7 @@ public class Utils {
         return program;
     }
 
-    public static Vec2 screenSpaceToNormalizedCoordinates(Vec3 screnSpace) {
+    public static Vec2 ScreenSpaceToNormalizedCoordinates(Vec3 screnSpace) {
 
         float xx = (screnSpace.x / Window.getInstance().config().width) * 2 - 1;
         float yy = (screnSpace.y / Window.getInstance().config().height) * -2 + 1;
@@ -324,7 +324,7 @@ public class Utils {
         return rand.nextInt(j - i) + i;
     }
     
-    public static Color randomColor(long seed) {
+    public static Color RandomColor(long seed) {
 
         return new Color(
             Utils.randomInt(0, 255, seed),

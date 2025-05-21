@@ -13,8 +13,6 @@ import com.himawari.HLA.Vec2;
 import com.himawari.HLA.Vec3;
 import com.himawari.Input.CameraInput;
 import com.himawari.Input.Input;
-import com.himawari.Simulation.SimulationController;
-import com.himawari.Simulation.SimulationKeyListener;
 import com.himawari.Utils.Utils;
 import com.himawari.Utils.WindowConfig;
 
@@ -29,46 +27,33 @@ public class Main {
         //GuiApp.launch(new GuiApp());
 
         Window myWindow = new Window(new WindowConfig(true));
-        File head = new File("D:\\TIAGO\\school\\iseppers\\pi4\\shodrone.simulator\\recordings\\recording_483683674.yaml");
-        File step = new File("D:\\TIAGO\\school\\iseppers\\pi4\\shodrone.simulator\\recordings\\recording_step_483683674.csv");
-
-        SimulationController sim = new SimulationController(head, step);
-        Window.hookListener(sim);
-
         Input.hookListener(new CameraInput());
-        Input.hookListener(new SimulationKeyListener(sim));
 
-        Mesh plane = Primitives.Plane(new Vec2(50, 50));
-        plane.base = Color.GREEN;
-        plane.transform.position = new Vec3(0, -1, 0);
+        final int bounds = 20;
 
-        Window.getInstance().currentRenderEnvironment().AddMesh(plane);
+        // Rendering shit
+        for (int i = 0; i < 100; i++) {
 
-        // final int bounds = 20;
+            Mesh cube = Mesh.LoadFrom("models/cube.obj");
+            cube.base = Color.BLUE;
 
-        // // Rendering shit
-        // for (int i = 0; i < 100; i++) {
+            cube.transform.position = new Vec3(Utils.randomInt(-bounds, bounds, System.nanoTime()), Utils.randomInt(-bounds, bounds, System.nanoTime()), Utils.randomInt(-bounds, bounds, System.nanoTime()));
+            cube.transform.setRotation(new Vec3(Utils.randomInt(-bounds, bounds, System.nanoTime()), Utils.randomInt(-bounds, bounds, System.nanoTime()), Utils.randomInt(-bounds, bounds, System.nanoTime())));
 
-        //     Mesh cube = Mesh.LoadFrom("models/cube.obj");
-        //     cube.base = Color.BLUE;
+            cube.transform.position.sum(new Vec3(0, 0, 20));
 
-        //     cube.transform.position = new Vec3(Utils.randomInt(-bounds, bounds, System.nanoTime()), Utils.randomInt(-bounds, bounds, System.nanoTime()), Utils.randomInt(-bounds, bounds, System.nanoTime()));
-        //     cube.transform.setRotation(new Vec3(Utils.randomInt(-bounds, bounds, System.nanoTime()), Utils.randomInt(-bounds, bounds, System.nanoTime()), Utils.randomInt(-bounds, bounds, System.nanoTime())));
+            myWindow.currentRenderEnvironment().addMesh(cube);
+        }
 
-        //     cube.transform.position.sum(new Vec3(0, 0, 20));
+        Mesh l = Primitives.Cube();
+        l.transform.scale = new Vec3(0.3f, 0.3f, 0.3f);
 
-        //     myWindow.currentRenderEnvironment().AddMesh(cube);
-        // }
+        l.transform.position = new Vec3(0, 0, 15);
+        l.base = Color.YELLOW;
 
-        // Mesh l = Primitives.Cube();
-        // l.transform.scale = new Vec3(0.3f, 0.3f, 0.3f);
+        //Gizmos.DrawNormals(cube);
 
-        // l.transform.position = new Vec3(0, 0, 15);
-        // l.base = Color.YELLOW;
-
-        // //Gizmos.DrawNormals(cube);
-
-        // Window.getInstance().currentRenderEnvironment().AddMesh(l);
+        Window.getInstance().currentRenderEnvironment().addMesh(l);
         //Renderer.renderQueue.add(rotationTest);
 
         myWindow.Loop();
