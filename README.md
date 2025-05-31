@@ -1,5 +1,5 @@
 # Himawari 3D
-A simple 3D renderer using SDL bindings for Java. Made from complete scratch using minimal dependencies (OpenGL and Java Native Access), a little buggy but it works for simple applications.
+A simple 3D renderer using OpenGL bindings for Java which can work either fully on the CPU or using the GPU. Made from complete scratch using minimal dependencies (OpenGL and Java Native Access), a little buggy but it works for simple applications.
 
 ## Features
 - Waveform file parsing
