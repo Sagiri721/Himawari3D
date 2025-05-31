@@ -2,7 +2,7 @@
 A simple 3D renderer using OpenGL bindings for Java which can work either fully on the CPU or using the GPU. Made from complete scratch using minimal dependencies (OpenGL and Java Native Access), a little buggy but it works for simple applications.
 
 ## Features
-- Waveform file parsing
+- OBJ file parsing
 - 3D translation, rotation and scaling
 - Camera projection
 - Keyboard input reading
