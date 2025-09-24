@@ -4,6 +4,7 @@
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec4 color;
 layout(location = 2) in vec3 normal;
+layout(location = 3) in vec2 texCoords;
 
 // Uniforms
 uniform vec2 screenSize;
@@ -12,6 +13,7 @@ uniform vec2 screenSize;
 out vec4 vertexColor;
 out vec3 vertexNormal; // face for now
 out vec3 vertexPos;
+out vec2 vertexTextureCoordinates;
 
 void main() {
 
@@ -22,4 +24,5 @@ void main() {
     vertexColor = color; 
     vertexNormal = normal;
     vertexPos = gl_Position.xyz;
+    vertexTextureCoordinates = texCoords;
 }

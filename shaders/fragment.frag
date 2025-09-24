@@ -4,6 +4,7 @@
 in vec4 vertexColor;
 in vec3 vertexNormal;
 in vec3 vertexPos;
+in vec2 vertexTextureCoordinates;
 
 // A light that illuminates all triangles in facing a certain direction
 struct DirectionalLight {
@@ -20,6 +21,9 @@ struct PointLight {
     float linear; // Controls rate of attenuation
     float quadratic; // Quadractic decrease of intensity
 };
+
+// Texture to sample
+uniform sampler2D texture0;
 
 // Scene casters
 DirectionalLight lightDir = DirectionalLight(vec3(0.2, 0.3, 1.0), 0.8);
@@ -44,7 +48,7 @@ void main()
     
     if (renderTarget == 1) {
         // Visualize normals as colors
-        finalColor = vec4((normal + 1.0) / 2.0, 1.0);
+        finalColor = vec4((normal + 1.0) / 2.0, vertexColor.a);
     }
     else {
         
@@ -62,11 +66,13 @@ void main()
         // Add ambient lighting to prevent complete darkness
         float lighting = /*attenuation * */(ambientLighting + (diffuse * lightDir.intensity));
 
-        finalColor = vertexColor * lighting;
+        finalColor = texture2D(texture0, vertexTextureCoordinates) * lighting;
+        //finalColor = lighting * vertexColor;
             
+        // !!! No need to normalize when sampling textures!!!
         // Normalize final color
-        finalColor.xyzw /= 255;
-        finalColor.w = 1;
+        // finalColor.xyzw /= 255;
+        finalColor.w = vertexColor.a;
     }
 
     gl_FragColor = finalColor;

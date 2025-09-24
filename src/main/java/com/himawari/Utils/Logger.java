@@ -4,7 +4,7 @@ import java.io.FileWriter;
 
 public class Logger {
 
-    public static final String LOG_FILE = "logs/himawari.log";
+    public static String LOG_FILE = "logs/himawari.log";
     private static boolean isInitialized = false;
 
     private static final String blueAnsi = "\u001B[34m";

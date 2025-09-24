@@ -7,6 +7,7 @@ import java.util.List;
 import com.himawari.Gfx.Window;
 import com.himawari.HLA.Triangle;
 import com.himawari.HLA.Vec3;
+import com.himawari.HLA.Vertex;
 import com.himawari.Utils.Utils;
 
 public class Clipping {
@@ -46,14 +47,14 @@ public class Clipping {
 
         // This variables will store the number of points inside and outside the plane space
         // As well as their positions
-        Vec3[] insidePoints = new Vec3[3], outsidePoints = new Vec3[3];
+        Vertex[] insidePoints = new Vertex[3], outsidePoints = new Vertex[3];
         int nInsidePoints = 0, nOutsidePoints = 0;
 
         // The distance of every point in the original triangle to the given plane
         // Float[] originDistance = Arrays.stream(face.vertices).map(v -> Utils.DistanceToShortestPlanePoint(v, normal, plane)).toArray(Float[]::new);
         float[] originDistance = new float[3];
         for (int i = 0; i < 3; i++) {
-            originDistance[i] = Utils.DistanceToShortestPlanePoint(face.get(i), normal, plane);
+            originDistance[i] = Utils.DistanceToShortestPlanePoint(face.get(i).position, normal, plane);
         }
 
         for (int i = 0; i < originDistance.length; i++) {

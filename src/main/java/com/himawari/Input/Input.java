@@ -123,4 +123,20 @@ public class Input {
 
         return new Vec2((float)xPos.get(0), (float)yPos.get(0));
     }
+
+    public static void cleanUp() {
+        
+        // Clear the key state buffer
+        keyStates.clear();
+
+        // Clear the listeners
+        listeners.clear();
+
+        // Unhook all listeners
+        GLFW.glfwSetKeyCallback(Window.getInstance().window, null);
+        GLFW.glfwSetMouseButtonCallback(Window.getInstance().window, null);
+        
+        // Reset mouse position
+        GLFW.glfwSetCursorPos(Window.getInstance().window, 0, 0);
+    }
 }

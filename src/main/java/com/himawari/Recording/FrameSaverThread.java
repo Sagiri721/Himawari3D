@@ -9,9 +9,17 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.imageio.ImageIO;
 
+import static org.lwjgl.glfw.GLFW.*;
+import com.himawari.Gfx.Window;
+
 public class FrameSaverThread extends Thread {
     
     private final BlockingQueue<FrameData> frameQueue = new LinkedBlockingQueue<>();
+
+    public FrameSaverThread() {
+        super();
+        frameQueue.clear();
+    }
 
     public void enqueueFrame(FrameData frame) {
         try {
@@ -44,7 +52,7 @@ public class FrameSaverThread extends Thread {
 
         try {
             
-            ImageIO.write(image, "png", new File("outputs/frame_" + String.format("%04d", frame.index) + ".png"));
+            ImageIO.write(image, "png", new File(Recorder.OUTPUT_FOLDER + "frame_" + String.format("%04d", frame.index) + ".png"));
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -53,7 +61,7 @@ public class FrameSaverThread extends Thread {
 
     public void run() {
         
-        while (true) {
+        while (Window.getInstance() != null && !glfwWindowShouldClose(Window.getInstance().window)) {
 
             if (Thread.interrupted()) {
                 break;

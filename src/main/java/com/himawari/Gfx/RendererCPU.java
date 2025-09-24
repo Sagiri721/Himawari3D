@@ -13,6 +13,7 @@ import com.himawari.Camera.Clipping;
 import com.himawari.HLA.Triangle;
 import com.himawari.HLA.Vec2;
 import com.himawari.HLA.Vec3;
+import com.himawari.HLA.Vertex;
 import com.himawari.Utils.RenderEnvironment;
 import com.himawari.Utils.Utils;
 
@@ -42,7 +43,7 @@ public class RendererCPU extends RenderEnvironment implements IRenderer {
 
             // Before buffering the renderer
             // Treat and cache the vertices after all projection operations
-            Vec3[] trianglePool = ProjectVerticesFromMesh(mesh);
+            Vertex[] trianglePool = ProjectVerticesFromMesh(mesh);
 
             // Buffer rendering
             // For each face of the mesh draw it's triangles
@@ -53,32 +54,36 @@ public class RendererCPU extends RenderEnvironment implements IRenderer {
     // Efectuate the rotation of the points in 3D space
     // Normals are a reference to the normals array list that is used later
     // Normals need to be calculated from the raw vertex data
-    private static Vec3[] ProjectVerticesFromMesh(Mesh mesh){
+    private static Vertex[] ProjectVerticesFromMesh(Mesh mesh){
 
-        Vec3[] trianglePool = new Vec3[mesh.vertices.length];
+        Vertex[] trianglePool = new Vertex[mesh.vertices.length];
         int index = 0;
 
         
         for (int i = 0; i < mesh.vertices.length; i+=3) {
 
             // Convert the floats to a Vec3 3 at a time
-            Vec3 vertex = new Vec3(mesh.vertices[i], mesh.vertices[i + 1], mesh.vertices[i + 2]);
+            //Vec3 vertex = new Vec3(mesh.vertices[i], mesh.vertices[i + 1], mesh.vertices[i + 2]);
+            Vertex vertex = new Vertex(
+                mesh.vertices[i].position,
+                mesh.vertices[i].texCoord
+            );
 
             // Copy the current value
-            trianglePool[index] = vertex.copy();
+            trianglePool[index] = vertex.clone();
 
             // Apply rotations
             // Apply rotations
             Projection.ProjectRotationMatricesToAngle(mesh.transform.getRotation());
-            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.rotationX, false);
-            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.rotationZ, false);
-            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.rotationY, false);
+            trianglePool[index].position = Utils.MultiplyMatrixVector(trianglePool[index].position, Projection.rotationX, false);
+            trianglePool[index].position = Utils.MultiplyMatrixVector(trianglePool[index].position, Projection.rotationZ, false);
+            trianglePool[index].position = Utils.MultiplyMatrixVector(trianglePool[index].position, Projection.rotationY, false);
             
             // Apply local transformations
-            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.MakeScale(mesh.transform.scale), false);
-            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.MakeTranslation(mesh.transform.position), false);
+            trianglePool[index].position = Utils.MultiplyMatrixVector(trianglePool[index].position, Projection.MakeScale(mesh.transform.scale), false);
+            trianglePool[index].position = Utils.MultiplyMatrixVector(trianglePool[index].position, Projection.MakeTranslation(mesh.transform.position), false);
 
-            trianglePool[index] = Utils.MultiplyMatrixVector(trianglePool[index], Projection.cameraView, false);
+            trianglePool[index].position = Utils.MultiplyMatrixVector(trianglePool[index].position, Projection.cameraView, false);
 
             index++;
         }
@@ -103,18 +108,18 @@ public class RendererCPU extends RenderEnvironment implements IRenderer {
         for (int j = 0; j < 3; j++) {
 
             // Apply projection
-            triangle.set(j, Utils.MultiplyMatrixVector(triangle.get(j), Projection.projectionMatrix, true));
+            triangle.set(j, new Vertex(Utils.MultiplyMatrixVector(triangle.get(j).position, Projection.projectionMatrix, true), triangle.get(j).texCoord));
             
             // Scale to normalized viewport
-            triangle.get(j).sum(Projection.normalizingTransformationPosition);
-            triangle.get(j).dot(Projection.normalizingTransformationScale);
+            triangle.get(j).position.sum(Projection.normalizingTransformationPosition);
+            triangle.get(j).position.dot(Projection.normalizingTransformationScale);
         }
 
         return triangle;
     }
 
     // Unlink the faces and buffer the rendering of the faces
-    private void BufferFaceTriangles(Vec3[] vertices, Mesh mesh){
+    private void BufferFaceTriangles(Vertex[] vertices, Mesh mesh){
 
         short[][] faces = mesh.faces;
         for (int i = 0; i < faces.length; i++) {
@@ -129,7 +134,7 @@ public class RendererCPU extends RenderEnvironment implements IRenderer {
             
             // Backface culling
             // Skip projection and drawing  
-            Vec3 cameraRay = (projTri.get(0).copy().sum(Camera.lookDirection.copy()));
+            Vec3 cameraRay = (projTri.get(0).position.copy().sum(Camera.lookDirection.copy()));
             float visionAngleDifference = Utils.RadiansToEuler(Vec3.getAngle(projNormal, cameraRay));
             if (visionAngleDifference <= 90) {
                 // The surface is facing away from the camera, so continue processing the next faces
@@ -179,7 +184,7 @@ public class RendererCPU extends RenderEnvironment implements IRenderer {
     }
 
     // From the face vertex links, turn them to the cached vertex triangles
-    private static Triangle UnlinkTriangleFaceVertices(short[] linkedface, Vec3[] vertices){
+    private static Triangle UnlinkTriangleFaceVertices(short[] linkedface, Vertex[] vertices){
         return new Triangle(vertices[(int) linkedface[0]], vertices[(int) linkedface[1]], vertices[(int) linkedface[2]]);
     }
 

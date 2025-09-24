@@ -126,7 +126,7 @@ public class Text implements AutoCloseable {
         g.dispose();
 
         // Register this texture
-        id = Utils.createTexture(texture);
+        id = Utils.CreateTexture(texture, false);
     }
 
     public void Render(Vec2 position, Color color) {

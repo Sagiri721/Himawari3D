@@ -3,6 +3,7 @@ package com.himawari.Utils;
 import static org.lwjgl.opengl.GL11.GL_CLAMP;
 import static org.lwjgl.opengl.GL11.GL_FALSE;
 import static org.lwjgl.opengl.GL11.GL_LINEAR;
+import static org.lwjgl.opengl.GL11.GL_REPEAT;
 import static org.lwjgl.opengl.GL11.GL_RGBA;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_MAG_FILTER;
@@ -30,14 +31,17 @@ import javax.imageio.ImageIO;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL30;
+import org.lwjgl.system.Pointer;
 
 import com.himawari.Gfx.Color;
 import com.himawari.Gfx.Projection;
+import com.himawari.Gfx.Shader;
 import com.himawari.Gfx.Window;
 import com.himawari.HLA.Mat4;
 import com.himawari.HLA.Triangle;
 import com.himawari.HLA.Vec2;
 import com.himawari.HLA.Vec3;
+import com.himawari.HLA.Vertex;
 
 public class Utils {
     
@@ -65,23 +69,23 @@ public class Utils {
         }
     }
 
-    public static void TransformVectorInPlace(float[] vector, Mat4 matrix) {
-        float x = vector[0];
-        float y = vector[1];
-        float z = vector[2];
+    public static void TransformVectorInPlace(Vertex vector, Mat4 matrix) {
+        float x = vector.position.x;
+        float y = vector.position.y;
+        float z = vector.position.z;
         float w = 1.0f;
         
-        vector[0] = x * matrix.m[0][0] + y * matrix.m[1][0] + z * matrix.m[2][0] + w * matrix.m[3][0];
-        vector[1] = x * matrix.m[0][1] + y * matrix.m[1][1] + z * matrix.m[2][1] + w * matrix.m[3][1];
-        vector[2] = x * matrix.m[0][2] + y * matrix.m[1][2] + z * matrix.m[2][2] + w * matrix.m[3][2];
+        vector.position.x = x * matrix.m[0][0] + y * matrix.m[1][0] + z * matrix.m[2][0] + w * matrix.m[3][0];
+        vector.position.y = x * matrix.m[0][1] + y * matrix.m[1][1] + z * matrix.m[2][1] + w * matrix.m[3][1];
+        vector.position.z = x * matrix.m[0][2] + y * matrix.m[1][2] + z * matrix.m[2][2] + w * matrix.m[3][2];
         
         // Auto perpective divide
         if (matrix.m.length > 3 && matrix.m[0].length > 3) {
             float w2 = x * matrix.m[0][3] + y * matrix.m[1][3] + z * matrix.m[2][3] + w * matrix.m[3][3];
             if (w2 != 0) {
-                vector[0] /= w2;
-                vector[1] /= w2;
-                vector[2] /= w2;
+                vector.position.x /= w2;
+                vector.position.y /= w2;
+                vector.position.z /= w2;
             }
         }
     }
@@ -132,13 +136,13 @@ public class Utils {
         Vec3 normal = new Vec3(0, 0, 0);
         
         // Calculate vectors directly without creating copies
-        float line1x = triangle.get(1).x - triangle.get(0).x;
-        float line1y = triangle.get(1).y - triangle.get(0).y;
-        float line1z = triangle.get(1).z - triangle.get(0).z;
+        float line1x = triangle.get(1).position.x - triangle.get(0).position.x;
+        float line1y = triangle.get(1).position.y - triangle.get(0).position.y;
+        float line1z = triangle.get(1).position.z - triangle.get(0).position.z;
         
-        float line2x = triangle.get(2).x - triangle.get(0).x;
-        float line2y = triangle.get(2).y - triangle.get(0).y;
-        float line2z = triangle.get(2).z - triangle.get(0).z;
+        float line2x = triangle.get(2).position.x - triangle.get(0).position.x;
+        float line2y = triangle.get(2).position.y - triangle.get(0).position.y;
+        float line2z = triangle.get(2).position.z - triangle.get(0).position.z;
         
         normal.x = line1y * line2z - line1z * line2y;
         normal.y = line1z * line2x - line1x * line2z;
@@ -149,18 +153,27 @@ public class Utils {
         return normal;
     }
 
-    public static Vec3 Vec3IntersectPlane(Vec3 plane, Vec3 normal, Vec3 lineStart, Vec3 lineEnd){
+    public static Vertex Vec3IntersectPlane(Vec3 plane, Vec3 normal, Vertex lineStart, Vertex lineEnd){
 
         normal = normal.normalized();
         float planeD = -Vec3.DotProduct(normal, plane);
-        float ad = Vec3.DotProduct(lineStart, normal);
-        float bd = Vec3.DotProduct(lineEnd, normal);
+        float ad = Vec3.DotProduct(lineStart.position, normal);
+        float bd = Vec3.DotProduct(lineEnd.position, normal);
+        
         float t = (-planeD - ad) / (bd - ad);
 
-        Vec3 lineStartToEnd = lineEnd.copy().subtract(lineStart);
+        Vec3 lineStartToEnd = lineEnd.position.copy().subtract(lineStart.position);
         Vec3 lineIntersec = lineStartToEnd.scale(t);
 
-        return lineStart.copy().sum(lineIntersec);
+        Vec3 intersectionPoint = lineStart.position.copy().sum(lineIntersec);
+
+        // Calculate changes in UV mapping
+        Vec2 newMapping = new Vec2(
+            lineStart.texCoord.x + (lineEnd.texCoord.x - lineStart.texCoord.x) * t,
+            lineStart.texCoord.y + (lineEnd.texCoord.y - lineStart.texCoord.y) * t
+        );
+
+        return new Vertex(intersectionPoint, newMapping);
     }
 
     public static float DistanceToShortestPlanePoint(Vec3 p, Vec3 normal, Vec3 plane){
@@ -215,7 +228,7 @@ public class Utils {
         return image;
     }
 
-    public static BufferedImage loadImage(String filePath) {
+    public static BufferedImage LoadImage(String filePath) {
         try {
             return ImageIO.read(new File(filePath));
         } catch (IOException e) {
@@ -224,7 +237,7 @@ public class Utils {
         }
     }
 
-    public static int createTexture(BufferedImage image) {
+    public static int CreateTexture(BufferedImage image, boolean createMipmaps) {
 
         int width = image.getWidth();
         int height = image.getHeight();
@@ -253,16 +266,28 @@ public class Utils {
         int textureID = glGenTextures();
         glBindTexture(GL_TEXTURE_2D, textureID);
         
+        // Upload texture data to memory
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+
         // Set texture parameters
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         
-        // Upload texture data to memory
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
-        
+        if (createMipmaps)
+            GL30.glGenerateMipmap(GL_TEXTURE_2D);
+
+        glBindTexture(GL_TEXTURE_2D, 0);
         return textureID;
+    }
+
+    public static void DeleteTexture(int texture) {
+        
+        if (texture > 0) {
+            glBindTexture(GL_TEXTURE_2D, 0);
+            GL30.glDeleteTextures(texture);
+        }
     }
 
     private static int CompileShader(String source, int type) {
@@ -287,13 +312,13 @@ public class Utils {
      * @param fragmentShader source code for the fragment shader
      * @return
      */
-    public static int CreateShader(String vertexShader, String fragmentShader) {
+    public static int CreateShader(Shader shader) {
 
         int program = GL30.glCreateProgram();
 
         // Load shader source code
-        int vs = CompileShader(vertexShader, GL30.GL_VERTEX_SHADER);
-        int fs = CompileShader(fragmentShader, GL30.GL_FRAGMENT_SHADER);
+        int vs = CompileShader(shader.getVertexShaderContent(), GL30.GL_VERTEX_SHADER);
+        int fs = CompileShader(shader.getFragmentShaderContent(), GL30.GL_FRAGMENT_SHADER);
 
         // Attach shaders to program
         GL30.glAttachShader(program, vs);
@@ -335,13 +360,13 @@ public class Utils {
     }
 
     // Given a 3D plane, correctly project the point to the matching Z axis
-    public static Vec3 ProjectOntoToFace(Vec3 vertex1, Vec3 vertex2, Vec3 vertex3, Vec3 point){
+    public static Vec3 ProjectOntoToFace(Vertex vertex1, Vertex vertex2, Vertex vertex3, Vec3 point){
 
-        Vec3 v1 = vertex2.copy().subtract(vertex1);
-        Vec3 v2 = vertex3.copy().subtract(vertex1);
+        Vec3 v1 = vertex2.position.copy().subtract(vertex1.position);
+        Vec3 v2 = vertex3.position.copy().subtract(vertex1.position);
 
         Vec3 planeCoefficients = Vec3.CrossProduct(v1, v2);
-        float planeConstant = planeCoefficients.copy().dot(vertex1).sum();
+        float planeConstant = planeCoefficients.copy().dot(vertex1.position).sum();
 
         float zComponent = (planeConstant - point.x*planeCoefficients.x - point.y * planeCoefficients.y) / planeCoefficients.z;
         point.z = zComponent;

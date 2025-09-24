@@ -11,6 +11,8 @@ import java.nio.ByteBuffer;
 import org.lwjgl.BufferUtils;
 public class Recorder {
     
+    public static String OUTPUT_FOLDER = "outputs/";
+
     private int framerate = 10, frameIndex = 0;
     private boolean recording = false;
 
@@ -75,7 +77,7 @@ public class Recorder {
     }
 
     public File getRecordingFolder() {
-        return new File("outputs/");
+        return new File(OUTPUT_FOLDER);
     }
 
     private void capture(){
@@ -93,5 +95,11 @@ public class Recorder {
         frameSaverThread.enqueueFrame(new FrameData(clone, width, height, frameIndex));
         
         targetBuffer.rewind();
+    }
+
+    public void cleanUp() {
+        frameSaverThread.stopThread();
+        frameSaverThread = null;
+        targetBuffer = null;
     }
 }

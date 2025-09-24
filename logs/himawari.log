@@ -4,7 +4,12 @@
 [INFO] : GL_DEPTH_TEST: true
 [INFO] : GL_CULL_FACE: false
 [INFO] : GL_BLEND: true
+[INFO] : Texture units: 8, max texture size: 16384
 [INFO] : Graphics card: Intel(R) HD Graphics 530
 [INFO] : Renderer loaded: class com.himawari.Gfx.RendererGPU
 [INFO] : Vertex shader: shaders/vertex.vert
 [INFO] : Fragment shader: shaders/fragment.frag
+[INFO] : #### Execution finished ####
+[INFO] : Ticks: 474
+[INFO] : Simulation time: 2363ms
+[INFO] : - Cleaning window

@@ -4,8 +4,8 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
+import org.lwjgl.opengl.GL15;
 
-import com.himawari.GUI.GuiApp;
 import com.himawari.Input.Input;
 import com.himawari.Input.InputListener;
 import com.himawari.Recording.Recorder;
@@ -76,6 +76,10 @@ public class Window implements AutoCloseable {
     @Override
     public void close(){
 
+        // Clean up other classes
+        Input.cleanUp();
+        renderer.Dispose();
+
         long simulationTime = System.currentTimeMillis() - startTime;
 
         Logger.LogInfo("#### Execution finished ####");
@@ -88,6 +92,8 @@ public class Window implements AutoCloseable {
         glfwDestroyWindow(window);
         glfwTerminate();
         glfwSetErrorCallback(null).free();
+
+        Window.instance = null;
     }
 
     private void InitWindow(){
@@ -176,6 +182,8 @@ public class Window implements AutoCloseable {
         Logger.LogInfo("GL_DEPTH_TEST: " + glIsEnabled(GL_DEPTH_TEST));
         Logger.LogInfo("GL_CULL_FACE: " + glIsEnabled(GL_CULL_FACE));
         Logger.LogInfo("GL_BLEND: " + glIsEnabled(GL_BLEND));
+
+        Logger.LogInfo("Texture units: " + glGetInteger(GL15.GL_MAX_TEXTURE_UNITS) + ", max texture size: " + glGetInteger(GL_MAX_TEXTURE_SIZE));
 
         // Find graphics card
         Logger.LogInfo("Graphics card: " + glGetString(GL_RENDERER));

@@ -6,10 +6,10 @@ import com.himawari.Utils.Utils;
 public class Triangle {
  
     // Triangle vertices
-    public Vec3[] vertices = new Vec3[3];
+    public Vertex[] vertices = new Vertex[3];
     public Color col = Color.WHITE;
 
-    public Triangle(Vec3 vertex1, Vec3 vertex2, Vec3 vertex3){
+    public Triangle(Vertex vertex1, Vertex vertex2, Vertex vertex3){
         
         this.vertices[0] = vertex1;
         this.vertices[1] = vertex2;
@@ -18,12 +18,12 @@ public class Triangle {
 
     public Triangle(){
         
-        this.vertices[0] = new Vec3();
-        this.vertices[1] = new Vec3();
-        this.vertices[2] = new Vec3();
+        this.vertices[0] = new Vertex();
+        this.vertices[1] = new Vertex();
+        this.vertices[2] = new Vertex();
     }
 
-    public Triangle(Vec3[] vertices){
+    public Triangle(Vertex[] vertices){
         this.vertices = vertices;
     }
 
@@ -33,11 +33,11 @@ public class Triangle {
         return t;
     }
 
-    public Vec3 get(int index){
+    public Vertex get(int index){
         return vertices[index];
     }
 
-    public void set(int index, Vec3 value){
+    public void set(int index, Vertex value){
         vertices[index] = value;
     }
 
@@ -47,7 +47,7 @@ public class Triangle {
 
     public float depth(int i) {
 
-        Vec2 screenPos = new Vec2(vertices[i].x, vertices[i].y);
+        Vec2 screenPos = new Vec2(vertices[i].position.x, vertices[i].position.y);
         float depth = Utils.ProjectOntoToFace(vertices[0], vertices[1], vertices[2], new Vec3(screenPos)).z;
         return depth;
     }

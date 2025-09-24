@@ -1,11 +1,15 @@
 package com.himawari.Gfx;
 
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.himawari.HLA.Vec2;
 import com.himawari.HLA.Vec3;
+import com.himawari.HLA.Vertex;
+import com.himawari.Utils.Logger;
 import com.himawari.Utils.Transform;
 import com.himawari.Utils.Utils;
 
@@ -19,21 +23,24 @@ public class Mesh {
     public Color base = Color.WHITE;
     public boolean lit = true;
     
-    public float[] vertices;
+    public Vertex[] vertices;
     public short[][] faces;
+
+    private int texture = -1;
 
     // Empty constructor
     public Mesh() {}
 
-    public Mesh(List<Vec3> vertices, List<int[]> faces){
+    public Mesh(List<Vertex> vertices, List<int[]> faces){
 
-        this.vertices = new float[vertices.size() * 3];
+        this.vertices = new Vertex[vertices.size()];
         this.faces = new short[faces.size()][];
 
         for (int i = 0; i < vertices.size(); i++) {
-            this.vertices[i * 3] = vertices.get(i).x;
-            this.vertices[i * 3 + 1] = vertices.get(i).y;
-            this.vertices[i * 3 + 2] = vertices.get(i).z;
+            this.vertices[i] = new Vertex(
+                vertices.get(i).position,
+                vertices.get(i).texCoord
+            );
         }
 
         for (int i = 0; i < faces.size(); i++) {
@@ -44,15 +51,16 @@ public class Mesh {
         }
     }
 
-    public Mesh(Vec3[] vertices, int[][] faces){
+    public Mesh(Vertex[] vertices, int[][] faces){
 
-        this.vertices = new float[vertices.length * 3];
+        this.vertices = new Vertex[vertices.length];
         this.faces = new short[faces.length][];
 
         for (int i = 0; i < vertices.length; i++) {
-            this.vertices[i * 3] = vertices[i].x;
-            this.vertices[i * 3 + 1] = vertices[i].y;
-            this.vertices[i * 3 + 2] = vertices[i].z;
+            this.vertices[i] = new Vertex(
+                vertices[i].position,
+                vertices[i].texCoord
+            );
         }
 
         for (int i = 0; i < faces.length; i++) {
@@ -63,15 +71,16 @@ public class Mesh {
         }
     }
 
-    private void fillArraysWithData(List<Vec3> vertices, List<int[]> faces){
+    private void fillArraysWithData(List<Vertex> vertices, List<int[]> faces){
 
-        this.vertices = new float[vertices.size() * 3];
+        this.vertices = new Vertex[vertices.size()];
         this.faces = new short[faces.size()][];
 
         for (int i = 0; i < vertices.size(); i++) {
-            this.vertices[i * 3] = vertices.get(i).x;
-            this.vertices[i * 3 + 1] = vertices.get(i).y;
-            this.vertices[i * 3 + 2] = vertices.get(i).z;
+            this.vertices[i] = new Vertex(
+                vertices.get(i).position,
+                vertices.get(i).texCoord
+            );
         }
 
         for (int i = 0; i < faces.size(); i++) {
@@ -104,7 +113,7 @@ public class Mesh {
 
         try {
 
-            List<Vec3> vertices = new ArrayList<Vec3>();
+            List<Vertex> vertices = new ArrayList<Vertex>();
             List<int[]> faces = new ArrayList<int[]>();
             
             String[] text = Utils.GetFileContents(filename).split("\n");
@@ -123,10 +132,10 @@ public class Mesh {
                 switch (values[0]) {
                     case VERTEX_CUE:
 
-                        Vec3 vertex = new Vec3();
-                        vertex.x = Float.parseFloat(values[1]);
-                        vertex.y = Float.parseFloat(values[2]);
-                        vertex.z = Float.parseFloat(values[3]);
+                        Vertex vertex = new Vertex();
+                        vertex.position.x = Float.parseFloat(values[1]);
+                        vertex.position.y = Float.parseFloat(values[2]);
+                        vertex.position.z = Float.parseFloat(values[3]);
 
                         vertices.add(vertex);
 
@@ -145,7 +154,7 @@ public class Mesh {
 
             // Initialize mesh
             Mesh mesh = new Mesh();
-            mesh.vertices = new float[vertices.size() * 3];
+            mesh.vertices = new Vertex[vertices.size()];
             mesh.faces = new short[faces.size()][];
             
             // Fill the vertices array
@@ -170,6 +179,16 @@ public class Mesh {
             );
     }
 
+    public void AddTexture(String texturePath) {
+
+        BufferedImage textureImage = Utils.LoadImage(texturePath);
+        this.texture = Utils.CreateTexture(textureImage, true);
+    }
+
+    public int getTexture() {
+        return this.texture;
+    }
+
     public Mesh clone() {
         
         Mesh clone = new Mesh();
@@ -182,6 +201,34 @@ public class Mesh {
         clone.transform = this.transform.clone();
         clone.base = this.base;
         clone.lit = this.lit;
+        clone.texture = this.texture;
+
         return clone;
+    }
+
+    public void dispose() {
+
+        try {
+            
+            // Clean up the texture if it exists
+            if (this.texture != -1) {
+                Utils.DeleteTexture(this.texture);
+                this.texture = -1;
+            }
+            
+        } catch (Exception e) {
+            Logger.LogWarning("Mesh cleanup failed: " + e.getMessage());
+        }
+    }
+
+    public Vec2[] getTextureCoordinates(short[] s) {
+        
+        Vec2[] texCoords = new Vec2[s.length];
+        for (int i = 0; i < s.length; i++) {
+            if (s[i] < vertices.length) {
+                texCoords[i] = vertices[s[i]].texCoord;
+            }
+        }
+        return texCoords;
     }
 }
